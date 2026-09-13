@@ -4,7 +4,7 @@
 **Owner / editor:** Samantha (non-technical)
 **Engineer:** Fern
 **Status:** Planning. No implementation has begun.
-**Last updated:** 2026-09-12
+**Last updated:** 2026-09-13
 
 ---
 
@@ -18,7 +18,7 @@ content editing without the Squarespace bill.
 Four things make this migration unusually low-risk, and the plan leans on all
 four:
 
-1. **The site is tiny.** 5 pages and 11 products. Total indexed surface is ~15 URLs.
+1. **The site is tiny.** 5 pages and 13 products (11 public). Indexed surface ~15 URLs.
 2. **The site is young.** Evidence (§2.3) puts its creation at **2025-07-01** —
    roughly 14 months old — so accumulated SEO equity is modest.
 3. **No email on the domain.** Samantha uses a personal Gmail, which removes the
@@ -69,35 +69,85 @@ Navigation is five items: `Home /`, `Shop /shop`, `Customs /custom-work`,
 
 ### 2.2 Products
 
-11 products total. Price range **CAD $90 – $300**. Two are marked `sold-out` in
-the shop grid.
+Reconciled from three sources — the CSV export (authoritative), the sitemap, and
+the shop grid. **No single source is complete.** 13 distinct product URLs exist.
 
-| Old slug (`/shop/p/…`) | Product | Type |
+| # | Product | Price (CAD) | Stock | Visible | Sizing | In CSV / map / grid |
+|---|---|---|---|---|---|---|
+| 1 | textured citrine sz 6 | 110 | **0** | Yes | fixed sz 6 | Y / Y / Y |
+| 2 | opal shark sz 10 | 300 | ∞ | Yes | fixed sz 10 | Y / Y / Y |
+| 3 | jelly bean opal ring sz 7.25 | 150 | **0** | Yes | fixed sz 7.25 | Y / Y / Y |
+| 4 | one of a kind \| leap ring sz 10 | 280 | **1** | Yes | fixed sz 10 | Y / Y / Y |
+| 5 | traveling stones adjustable sz 8-9.5* | 220 → **190 on sale** | ∞ | **No** | adjustable | Y / — / — |
+| 6 | ruby shark sz 4.75 | 200 | ∞ | Yes | fixed sz 4.75 | Y / Y / Y |
+| 7 | ruby tiger sz 9.5 | 245 → **215 on sale** | ∞ | Yes | fixed sz 9.5 | Y / Y / Y |
+| 8 | bolder bird \| MADE TO ORDER* | **290–340** | ∞ | Yes | **6 size variants (7–12)** | Y / Y / Y |
+| 9 | drippy honey \| MADE TO ORDER* | 275 | ∞ | Yes | **none — see below** | Y / Y / Y |
+| 10 | toad ring \| MADE TO ORDER* | **90–140** | ∞ | Yes | **11 size variants (6–11)** | Y / — / Y |
+| 11 | tri boulder opal sz 9 | 180 | ∞ | Yes | fixed sz 9 | Y / Y / Y |
+| 12 | mirrored teardrop ring sz 7 | 175 | ∞ | **No** | fixed sz 7 | Y / — / — |
+| 13 | Custom ring payment | ? | — | Yes | non-physical | — / Y / — |
+
+57 product images across the 12 exported products.
+
+**Stock is not what the brief assumed.** Only three products have finite stock.
+Everything else is `Unlimited` — confirmed deliberate: Samantha can remake these
+pieces on request. So the double-sell surface is **exactly one live product**
+(leap ring, stock 1), which validates the best-effort inventory decision (D7)
+for a different and better reason than originally argued.
+
+**`one-of-a-kind` vs `made-to-order` is the wrong axis.** The data shows two
+*independent* properties, and the schema in §6 models them separately:
+
+- **stock** — a finite integer, or unlimited
+- **sizing** — `fixed` (size baked into the name), `variants` (customer picks,
+  price varies), or `adjustable`
+
+`opal shark sz 10` is a fixed-size ring with unlimited stock — a combination the
+original enum could not express.
+
+#### 2.2.1 Pricing anomalies — act on these
+
+Squarespace stores `Price`, `Sale Price` and an `On Sale` flag independently, so
+dormant sale prices sit in the data waiting to be activated.
+
+**Live sales (must carry over):**
+
+| Product | List | Sale |
 |---|---|---|
-| `7tuvix3lwe4hixbfdwbfm4az1s7awq` | opal shark sz 10 | one-of-a-kind |
-| `8w3mik8nwvjtmzqd76z54feb98u52l` | jelly bean opal ring sz 7.25 | one-of-a-kind |
-| `ofkqtolf9xssc47mxb3ywtstqgv9q4` | one of a kind \| leap ring sz 10 | one-of-a-kind |
-| `1zhw2o243y124yydvayxku0q8c4t96` | textured citrine sz 6 | one-of-a-kind |
-| `product-1-ydar7-e8mlb-r2y28-fyje9` | ruby shark sz 4.75 | one-of-a-kind |
-| `product-2-5c6mb-j8mng-zyt72-7p2zw` | ruby tiger sz 9.5 | one-of-a-kind |
-| `product-6-yrdld-pcpw6-t3kp7-fdcwe` | tri boulder opal sz 9 | one-of-a-kind |
-| `product-3-szb2y-gzh2r-3ly82-s7ghx` | bolder bird \| MADE TO ORDER* | made-to-order |
-| `product-4-9e76d-pr6ls-5tznn-wdzn6` | drippy honey \| MADE TO ORDER* | made-to-order |
-| `product-5-f98ry-4ll53-pbaad-6mblk` | toad ring \| MADE TO ORDER* | made-to-order |
-| `sqtf2ekwh6wa01pzfryruvdsswlian` | Custom ring payment | payment shim — see §7.5 |
+| ruby tiger sz 9.5 | 245 | **215** |
+| traveling stones (hidden) | 220 | **190** |
 
-**Two discrepancies worth noting:**
+**Dormant sale prices (must NOT be applied on import):**
+opal shark 300→280 · jelly bean 150→136 · ruby shark 200→153 ·
+drippy honey 275→191.25 · mirrored teardrop 175→127.50
 
-- `product-5-…` (toad ring) appears in the shop grid but **not** in the sitemap.
-- `sqtf2ek…` (Custom ring payment) appears in the sitemap but **not** in the grid.
+> ⚠️ **`leap ring` has a dormant sale price of $2.30 against a list price of
+> $280.** Almost certainly a typo for $230.00. If anyone ever toggles "On Sale"
+> on that product it sells for $2.30. **This is a live risk in the current store
+> and should be corrected in Squarespace today**, independently of this
+> migration. The import rule (§6.2) refuses it regardless.
 
-Squarespace's sitemap is therefore not a reliable inventory. The authoritative
-list must come from the CSV export (§4, task 2.2).
+**Import rule:** apply `salePrice` only where `On Sale == Yes`. Preserve dormant
+values nowhere — they are re-enterable by hand if ever wanted.
 
-Naming convention is already structured and should be preserved as data, not
-as part of the title string:
-- `one of a kind | <name> sz <size>` → unique piece, fixed size
-- `<name> | MADE TO ORDER*` → repeatable, customer picks size
+#### 2.2.2 Other data issues
+
+- **`drippy honey` is marked MADE TO ORDER but has no size options**, while its
+  own description says "made to order in different colours and sizes". Almost
+  certainly misconfigured. Treat as `variants` with sizes to be supplied.
+- **Weight/dimension data is inconsistent** — 5 products carry `1.0–2.0` weight
+  and `9×5×2`, 7 are all zeros. Since shipping is flat-rate per zone (D17),
+  this data drives nothing and is not migrated.
+- **Descriptions carry Squarespace RTE cruft** — `<p class="">`,
+  `style="white-space:pre-wrap;"`, `data-rte-preserve-empty`,
+  `<span style="color: rgb(0,0,0)">`, `&nbsp;`. Must be sanitised to clean
+  Markdown on import, not copied verbatim.
+- **Tags are sparse and inconsistent** — only 2 of 12 products have any
+  (`opal, boulder opal`; `opal, cubic zirconia, ring, statement ring, fairy ring`).
+  Categories are empty throughout. Imported as-is; could drive filtering later.
+- **SKUs are `SQ`-prefixed and Squarespace-generated.** Not reused.
+
 
 ### 2.3 Site age (inferred)
 
@@ -153,12 +203,18 @@ Squarespace left open."
 | D4 | Payments | **Stripe Checkout** (hosted) | PCI scope offloaded, Apple/Google Pay, built-in receipts |
 | D5 | Cart | Client-side, **no framework** | nanostores + vanilla web components |
 | D6 | Images | **R2** + Cloudflare Image Transformations | Keeps repo lean, edge-cached, scales past the current 50 images |
-| D7 | Inventory | **Best-effort** KV guard | Explicitly chosen over a hard D1 guarantee; see §7.4 |
+| D7 | Inventory | **Best-effort** KV guard | Only 1 live product has finite stock (§2.2); a hard guarantee would be over-engineering |
 | D8 | Sold items | **Stay live, marked Sold** | Preserves URLs, doubles as portfolio, drives custom inquiries |
 | D9 | Product URLs | **Clean slugs + 301s** | Old slugs are meaningless; site is young; 301s are near-free |
 | D10 | Design | Same brand, cleaner execution | Familiar to returning customers |
 | D11 | Editors | 2 (Fern + Samantha), GitHub login | Keystatic hides git behind a normal form UI |
 | D12 | Ownership | Stripe + domain → Samantha; infra → Fern | Stripe must legally be in the business owner's name |
+| D13 | Currency | **CAD** | Confirmed: live `Product` JSON-LD, Toronto business |
+| D14 | Sale pricing | **Compare-at supported** | 2 products are live on sale; struck-through price is a real conversion cue |
+| D15 | Size pricing | **Per-size variants** | bolder bird 290–340, toad ring 90–140 — imported verbatim |
+| D16 | Hidden products | **Import as drafts** | Preserves photography and copy at zero cost |
+| D17 | Shipping | **Flat rate per zone** | Weight data drives nothing today |
+| D18 | Order history | **Export and archive** | Not migrated; kept out of the repo (customer PII) |
 
 ### 3.1 Rejected alternatives
 
@@ -278,48 +334,77 @@ set of bindings — no split-brain between a Pages project and a separate Worker
 
 ## 6. Content model
 
+The schema follows the data, not the brief. **`stock` and `sizing` are
+independent** (§2.2), and price lives on the *variant*, not the product.
+
 ```ts
 // keystatic.config.ts  (abridged — field types illustrative)
 products: collection({
   slugField: 'title',
   path: 'content/products/*',
   schema: {
-    title:       fields.slug({ name: { label: 'Ring name' } }),
-    kind:        fields.select({ options: ['one-of-a-kind','made-to-order'] }),
-    status:      fields.select({ options: ['available','sold','draft'] }),
-    price:       fields.integer({ label: 'Price (CAD cents)' }),
-    ringSize:    fields.text({ label: 'Size (one-of-a-kind only)' }),
-    sizeOptions: fields.array(fields.text()),   // made-to-order
-    leadTime:    fields.text({ label: 'e.g. "3–4 weeks"' }),
-    materials:   fields.array(fields.text()),
-    stone:       fields.text(),
-    images:      fields.array(fields.object({
-                   key: fields.text(),          // R2 object key
-                   alt: fields.text(),          // REQUIRED — see §8.4
-                 })),
+    title:   fields.slug({ name: { label: 'Ring name' } }),
+    status:  fields.select({ options: ['published','draft','archived'] }),
+
+    // --- how the customer picks a size
+    sizing:  fields.select({ options: ['fixed','variants','adjustable'] }),
+    fixedSize: fields.text(),        // sizing=fixed      e.g. "10", "7.25"
+    sizeRange: fields.text(),        // sizing=adjustable e.g. "8-9.5"
+
+    // --- price + stock live per variant
+    variants: fields.array(fields.object({
+      size:      fields.text(),      // "" when sizing != 'variants'
+      price:     fields.integer({ label: 'CAD cents' }),
+      salePrice: fields.integer({ label: 'CAD cents, blank = not on sale' }),
+      stock:     fields.text({ label: 'integer, or "unlimited"' }),
+    })),
+
+    leadTime:  fields.text(),        // made-to-order turnaround
+    materials: fields.array(fields.text()),
+    stone:     fields.text(),
+    images:    fields.array(fields.object({
+                 key: fields.text(),   // R2 object key
+                 alt: fields.text(),   // REQUIRED — §8.4
+               })),
     description: fields.mdx(),
     care:        fields.mdx(),
-    seoTitle:    fields.text(),
+    seoTitle:       fields.text(),
     seoDescription: fields.text(),
-    legacySlugs: fields.array(fields.text()),   // drives 301s — see §8.3
+    legacySlugs:    fields.array(fields.text()),   // drives 301s — §8.3
   }
 })
 ```
 
-Two fields carry disproportionate weight:
+Why this shape:
 
-- **`alt`** is required on every image. Jewellery gets real traffic from Google
-  Images, and the current site's alt text is inconsistent.
-- **`legacySlugs`** makes redirects data rather than config. Adding an old URL
-  to a product regenerates `_redirects` on the next build — no code change.
+- **`variants[]` always exists**, even for a fixed-size ring — it just has one
+  entry. This means the checkout price lookup has exactly one code path.
+- **`salePrice` blank means not on sale.** There is no separate `onSale` boolean,
+  which is precisely the footgun that produced the $2.30 leap ring (§2.2.1).
+  Removing the flag makes the dangerous state unrepresentable.
+- **`alt` is required.** Jewellery earns real traffic from Google Images.
+- **`legacySlugs` makes redirects data.** Adding an old URL regenerates
+  `_redirects` on the next build — no code change.
 
-### 6.1 Slug collision
+### 6.1 Slug collisions
 
-Because sold rings keep their pages forever (D8), a future "opal shark sz 10"
-would collide with the existing slug. Keystatic enforces uniqueness within a
-collection, so Samantha would be forced to pick e.g. `opal-shark-sz-10-2`.
-**This must be covered in her runbook** (§9) or it will surface as a confusing
-error at the worst moment.
+Sold rings keep their pages forever (D8), so a future "opal shark sz 10" collides
+with the existing slug. Keystatic enforces uniqueness, so Samantha would hit an
+error and must pick e.g. `opal-shark-sz-10-2`. **Must be covered in her runbook**
+(§9) or it surfaces as a confusing failure at the worst moment.
+
+### 6.2 Import rules
+
+`scripts/import-products.ts` must:
+
+1. Apply `salePrice` **only** where `On Sale == Yes` — dropping all 5 dormant values.
+2. **Refuse any salePrice below 10% of list** and fail loudly. Catches the $2.30 leap ring.
+3. Sanitise descriptions from Squarespace RTE HTML to clean Markdown.
+4. Map `Stock: "Unlimited"` → `"unlimited"`, numerics → integers.
+5. Collapse orphan variant rows (the CSV emits them with a blank Product ID) into their parent.
+6. Set `status: draft` for `Visible == No` (traveling stones, mirrored teardrop).
+7. Download every image at `?format=2500w` and upload to R2 before writing content.
+8. Leave `alt` blank and **fail the build** until filled — forcing a real pass over all 57 images.
 
 ---
 
@@ -334,19 +419,23 @@ and a header count badge, as three small vanilla web components.
 ### 7.2 Checkout — `POST /api/checkout`
 
 ```
-1. Receive [{slug, qty, size}]
-2. Look up each slug in the build-time catalog bundled into the Worker
-   ── prices come from the server, NEVER from the request body
-3. For one-of-a-kind items: reject if KV SOLD[slug] is set
-4. Build stripe.checkout.sessions.create({
+1. Receive [{slug, size, qty}]
+2. Resolve (slug, size) -> variant in the build-time catalog bundled
+   into the Worker.  Price = variant.salePrice ?? variant.price
+   ── money comes from the server, NEVER from the request body
+3. If variant.stock is finite: reject if KV SOLD[slug:size] is set
+4. stripe.checkout.sessions.create({
      mode: 'payment',
-     line_items: [price_data built server-side, size in metadata],
+     currency: 'cad',                          // D13
+     line_items: [price_data built server-side; size in metadata],
      shipping_address_collection: { allowed_countries: [...] },
-     shipping_options: [...],                  // §14 Q3
-     currency: 'cad',                          // §14 Q1 — BLOCKING
+     shipping_options: [...],                  // flat per zone — Q13
    })
 5. Return { url }; client redirects
 ```
+
+The lookup key is **`(slug, size)`, not `slug`** — bolder bird sells for $290 at
+size 7 and $340 at size 12, so a slug-only lookup would undercharge by up to $50.
 
 > **Security invariant:** the client sends slugs and quantities, never money.
 > Any design where the browser supplies a price is trivially exploitable. The
@@ -359,7 +448,7 @@ Verifies the Stripe signature using Web Crypto (`constructEventAsync` with
 `Stripe.createSubtleCryptoProvider()` — the synchronous Node path does not exist
 in Workers). On `checkout.session.completed`:
 
-1. Set `KV SOLD[slug]` for each one-of-a-kind line item.
+1. Set `KV SOLD[slug:size]` for each finite-stock line item.
 2. Email Samantha the order, **including ring size**, which she needs to make it.
 
 Stripe emails the customer's receipt itself, so we send no customer email.
@@ -368,13 +457,17 @@ Stripe emails the customer's receipt itself, so we send no customer email.
 
 D7 selected **best-effort**. Concretely:
 
-- **Static layer** — `status: sold` in the CMS, baked into HTML at build.
+- **Static layer** — `variants[].stock` in the CMS, baked into HTML at build.
 - **Runtime layer** — KV guard checked before session creation, written by the webhook.
 
 KV is eventually consistent (propagation can take up to ~60s globally), so two
-buyers hitting checkout within the same minute could both succeed. At a few
-orders a week across 8 unique rings, this is a genuinely remote risk, and the
-remedy — refund and apologise — is cheap.
+buyers hitting checkout within the same minute could both succeed.
+
+**The exposure is one product.** Per §2.2 only `leap ring` (stock 1) is both
+live and finite; the other two finite items are already sold out. Two buyers
+would have to hit the same ring within the same minute at a few orders a week.
+The remedy — refund and apologise — is cheap, and a hard guarantee here would be
+over-engineering.
 
 **Upgrade path if it ever bites:** swap the KV read for a D1 transaction, or a
 Durable Object keyed by slug, for a strict guarantee. The interface in
@@ -389,6 +482,10 @@ public shop briefly displays an arbitrary price.
 **Replace it with Stripe Payment Links.** Per commission she creates a one-off
 link in the Stripe dashboard for the agreed amount and sends it directly. No
 site edit, no race, no public price, and it works from her phone.
+
+The listing is still live but is not a physical product, which is why it is
+absent from the products CSV (§2.2). Its price is therefore unknown — and
+irrelevant, since Payment Links are priced per commission.
 
 Consequently `/shop/p/sqtf2ekwh6wa01pzfryruvdsswlian` does **not** become a
 product. It 301s to `/custom-work` (§8.3).
@@ -419,23 +516,29 @@ up meaningless slugs — provided every old URL 301s.
 
 ### 8.3 Product redirects
 
-All 11 old slugs 301 to readable equivalents, generated from `legacySlugs`:
+All 13 old slugs 301 to readable equivalents, generated from `legacySlugs`:
 
-| Old `/shop/p/…` | New `/shop/p/…` |
-|---|---|
-| `7tuvix3lwe4hixbfdwbfm4az1s7awq` | `opal-shark-sz-10` |
-| `8w3mik8nwvjtmzqd76z54feb98u52l` | `jelly-bean-opal-ring-sz-7-25` |
-| `ofkqtolf9xssc47mxb3ywtstqgv9q4` | `leap-ring-sz-10` |
-| `1zhw2o243y124yydvayxku0q8c4t96` | `textured-citrine-sz-6` |
-| `product-1-ydar7-e8mlb-r2y28-fyje9` | `ruby-shark-sz-4-75` |
-| `product-2-5c6mb-j8mng-zyt72-7p2zw` | `ruby-tiger-sz-9-5` |
-| `product-6-yrdld-pcpw6-t3kp7-fdcwe` | `tri-boulder-opal-sz-9` |
-| `product-3-szb2y-gzh2r-3ly82-s7ghx` | `bolder-bird` |
-| `product-4-9e76d-pr6ls-5tznn-wdzn6` | `drippy-honey` |
-| `product-5-f98ry-4ll53-pbaad-6mblk` | `toad-ring` |
-| `sqtf2ekwh6wa01pzfryruvdsswlian` | → **`/custom-work`** (§7.5) |
+| Old `/shop/p/…` | New `/shop/p/…` | Note |
+|---|---|---|
+| `1zhw2o243y124yydvayxku0q8c4t96` | `textured-citrine-sz-6` | sold out |
+| `7tuvix3lwe4hixbfdwbfm4az1s7awq` | `opal-shark-sz-10` | |
+| `8w3mik8nwvjtmzqd76z54feb98u52l` | `jelly-bean-opal-ring-sz-7-25` | sold out |
+| `ofkqtolf9xssc47mxb3ywtstqgv9q4` | `leap-ring-sz-10` | stock 1 |
+| `product-1-ydar7-e8mlb-r2y28-fyje9` | `ruby-shark-sz-4-75` | |
+| `product-2-5c6mb-j8mng-zyt72-7p2zw` | `ruby-tiger-sz-9-5` | on sale |
+| `product-6-yrdld-pcpw6-t3kp7-fdcwe` | `tri-boulder-opal-sz-9` | |
+| `product-3-szb2y-gzh2r-3ly82-s7ghx` | `bolder-bird` | 6 size variants |
+| `product-4-9e76d-pr6ls-5tznn-wdzn6` | `drippy-honey` | sizes TBC |
+| `product-5-f98ry-4ll53-pbaad-6mblk` | `toad-ring` | 11 size variants |
+| `p0om2oddwmey43nrqa6ffzurff69av` | `traveling-stones-adjustable` | **draft** |
+| `zg3idrj6agsfr28g6adocbadcgvkho` | `mirrored-teardrop-ring-sz-7` | **draft** |
+| `sqtf2ekwh6wa01pzfryruvdsswlian` | → **`/custom-work`** | §7.5 |
 
 Made-to-order slugs deliberately omit size, since the customer chooses it.
+
+The two draft products were never public (`Visible: No`), so they were never
+indexed and strictly need no redirect. They get one anyway — it costs nothing
+and covers the case where either is later published.
 
 `scripts/verify-redirects.ts` asserts every old URL returns 301 to a URL
 returning 200. It runs in CI and blocks deploy on failure.
@@ -522,19 +625,21 @@ they change, and this plan should not encode a number nobody verified.
 ### Phase 0 — De-risk (do first, blocks everything)
 - [ ] 0.1 **Set up Google Search Console on the live Squarespace site** (§8.5)
 - [ ] 0.2 Set up Bing Webmaster Tools
-- [ ] 0.3 **Confirm currency: CAD or USD** (§14 Q1) — blocks all checkout work
+- [x] 0.3 ~~Confirm currency~~ — **CAD confirmed** (D13)
 - [ ] 0.4 Open the Stripe account in Samantha's name; complete identity + bank verification
 - [ ] 0.5 Confirm `.ca` registrar transfer path (§13.1) — **Cloudflare Registrar does not support `.ca`**
 - [ ] 0.6 Record the Squarespace renewal date
 - [ ] 0.7 Export Squarespace analytics history before it is lost
 - [ ] 0.8 Resolve the site-age discrepancy (§2.3)
+- [ ] 0.9 ⚠️ **Fix the leap ring $2.30 sale price in Squarespace** (§2.2.1)
+- [ ] 0.10 Confirm `drippy honey` sizes (Q14) and the 2 hidden products (Q15, Q16)
 
 ### Phase 1 — Extract
-- [ ] 1.1 Export products CSV (authoritative list, prices, stock, descriptions)
-- [ ] 1.2 Export order + customer history
+- [x] 1.1 ~~Export products CSV~~ — done, at `data/squarespace-products-export-2026-09-13.csv`
+- [ ] 1.2 Export order + customer history — archive **outside the repo** (customer PII, D18)
 - [ ] 1.3 Download every image at full resolution (`?format=2500w`) — **before any cancellation**
 - [ ] 1.4 Capture the 3 lost-ring-series videos (§14 Q8)
-- [ ] 1.5 Record exact shipping countries + rates (§14 Q3)
+- [ ] 1.5 **Record exact shipping zones + rates (Q13) — last checkout blocker**
 - [ ] 1.6 Archive remaining page HTML for copy parity
 
 ### Phase 2 — Foundation
@@ -551,7 +656,7 @@ they change, and this plan should not encode a number nobody verified.
 - [ ] 3.3 `/keystatic` + `/api/keystatic` as `prerender = false`
 - [ ] 3.4 R2 upload path + custom image field
 - [ ] 3.5 `/img/*` transform proxy
-- [ ] 3.6 Import 11 products
+- [ ] 3.6 Import 13 products per §6.2 (11 published, 2 draft)
 - [ ] 3.7 Port About + 7 FAQs + lost ring series verbatim
 - [ ] 3.8 Port Customs page + form
 
@@ -568,7 +673,7 @@ they change, and this plan should not encode a number nobody verified.
 ### Phase 5 — SEO + new pages
 - [ ] 5.1 JSON-LD (Product/Offer/Breadcrumb/Organization)
 - [ ] 5.2 `sitemap.xml` + `robots.txt` at identical paths
-- [ ] 5.3 Generate `_redirects` from `legacySlugs`
+- [ ] 5.3 Generate `_redirects` from `legacySlugs` (13 product + `/home`)
 - [ ] 5.4 `verify-redirects.ts` in CI
 - [ ] 5.5 Write `/policies/*`, `/sizing`, `/contact`
 - [ ] 5.6 Meta descriptions for every page
@@ -634,7 +739,7 @@ change. If anything was recently changed, the transfer may be blocked for up to
 | 4 | Verify staging against production Stripe | Test mode off |
 | 5 | Point apex + `www` at the Worker | `www` canonical, apex 301s |
 | 6 | Verify TLS | Full (strict) |
-| 7 | Run `verify-redirects.ts` against production | All 11 + `/home` |
+| 7 | Run `verify-redirects.ts` against production | All 13 + `/home` |
 | 8 | Remove `noindex`; confirm `robots.txt` | Easy to forget; breaks everything |
 | 9 | Submit `sitemap.xml` in GSC | |
 | 10 | Request indexing for the 5 main pages | |
@@ -646,7 +751,7 @@ change. If anything was recently changed, the transfer may be blocked for up to
 
 | When | Check |
 |---|---|
-| Hour 1 | All 17 URLs 200/301; checkout works; no console errors |
+| Hour 1 | All 19 URLs 200/301; checkout works; no console errors |
 | Day 1 | GSC crawl errors; Cloudflare analytics vs baseline |
 | Day 3 | New URLs appearing in GSC index |
 | Week 1 | Old slugs dropping out; new slugs entering; impressions stable |
@@ -672,32 +777,39 @@ After Squarespace is cancelled there is no rollback. That is the point of the
 
 ---
 
-## 14. Open questions — must be closed before the phase noted
+## 14. Open questions
+
+### 14.1 Closed by the CSV export (2026-09-13)
+
+| # | Question | Answer |
+|---|---|---|
+| ~~Q1~~ | Currency | **CAD** — confirmed (D13) |
+| ~~Q3~~ | Shipping model | **Flat rate per destination zone** (D17). *Rates still needed — see Q13* |
+| ~~Q5~~ | Which products are sold out | textured citrine and jelly bean opal (stock 0) |
+| ~~Q8~~ | Custom ring payment listing | Still live as a non-physical product; replaced by Payment Links (§7.5) |
+
+### 14.2 Still open
 
 | # | Question | Blocks | Why it matters |
 |---|---|---|---|
-| **Q1** | **Currency — CAD or USD?** The brief said USD; the live `Product` JSON-LD says `"priceCurrency": "CAD"` and the business is in Toronto. **The site's own markup is the stronger evidence.** | **Phase 0** | Wrong currency means every price is wrong by ~35%. Absolutely blocking |
-| Q2 | Was there an earlier site on this domain before 2025-07-01? (§2.3) | Phase 0 | Changes the SEO risk model and may add redirects |
-| Q3 | Exact shipping countries and rates | Phase 4 | The country list found in the HTML is Squarespace's generic phone-code dropdown, **not** her shipping config. Needs the real settings |
-| Q4 | GST/HST registration status | Phase 0 | "No tax collected" was the answer, but a Canadian business over the CRA small-supplier threshold must register. **An accountant's question, not an engineering one** — flagged, not decided here |
-| Q5 | Which 2 of 11 products are sold out | Phase 3 | Resolvable from the CSV export |
+| **Q13** | **Exact shipping zones and rates** | **Phase 4** | The only remaining checkout blocker. Model is settled; the numbers are not |
+| Q2 | Was there an earlier site before 2025-07-01? (§2.3) | Phase 0 | Changes the SEO risk model; may add redirects |
+| Q4 | GST/HST registration status | Phase 0 | A Canadian business over the CRA small-supplier threshold must register. **An accountant's question, not an engineering one** — flagged, not decided here |
 | Q6 | Squarespace renewal date | Phase 0 | Sets the outer deadline |
-| Q7 | Current custom-request form fields | Phase 3 | Must be reproduced faithfully |
-| Q8 | Where do the 3 lost-ring-series videos live? | Phase 1 | If Squarespace-hosted they die with the account. Likely YouTube/Vimeo/Instagram embed |
-| Q9 | Do Instagram shopping tags point at product URLs? | Phase 5 | Would need retagging after slug changes |
-| Q10 | Brand assets — logo source, fonts | Phase 2 | Fonts were inlined by Squarespace; originals preferred |
-| Q11 | Return/refund policy wording | Phase 5 | Stripe requires a published policy |
-| Q12 | Confirm `www` vs apex as canonical | Phase 7 | Current canonical is `www` — keep it |
+| Q7 | Custom-request form fields | Phase 3 | Must be reproduced faithfully |
+| Q9 | Where do the 3 lost-ring-series videos live? | Phase 1 | If Squarespace-hosted they die with the account |
+| Q10 | Instagram shopping tags pointing at product URLs? | Phase 5 | Would need retagging after slug changes |
+| Q11 | Brand assets — logo source, fonts | Phase 2 | Squarespace inlined the fonts; originals preferred |
+| Q12 | Return/refund policy wording | Phase 5 | Stripe requires a published policy |
+| **Q14** | **`drippy honey` size options** | Phase 3 | Marked made-to-order with no sizes, but its own copy says "different colours and sizes". Needs the real size/price list |
+| **Q15** | **Why are the 2 hidden products hidden?** | Phase 3 | Imported as drafts either way (D16), but determines whether they should later publish as available or sold |
+| **Q16** | **Is `traveling stones` still on sale at $190?** | Phase 3 | It is flagged On Sale but hidden, so the sale may be stale |
+| Q17 | Confirm `www` vs apex as canonical | Phase 7 | Current canonical is `www` — keep it |
 
-### 14.1 Additional HTML that would help
+### 14.3 Action items outside the migration
 
-Fern offered more captures. Most useful, in order:
-
-1. **A made-to-order product page** (e.g. `bolder bird`) — shows how size selection is presented, which drives §7.2
-2. **A sold-out product page** — shows the sold state we must reproduce
-3. **The `/custom-work` form** with fields visible (Q7)
-4. **`/cart` and the Squarespace checkout** — the flow we are replacing
-5. The **products CSV export** — supersedes several open questions at once
+- ⚠️ **Fix the `leap ring` $2.30 sale price in Squarespace now** (§2.2.1). Live risk today, independent of this project.
+- Consider whether `ruby tiger` should still be on sale at cutover.
 
 ---
 
@@ -706,12 +818,14 @@ Fern offered more captures. Most useful, in order:
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
 | Domain lost during transfer | Low | **Catastrophic** | Strict ordering (§13.1); never cancel first |
-| Currency wrong (Q1) | **Medium** | **High** | Blocking Phase 0 check |
+| ~~Currency wrong~~ | — | — | **Closed** — CAD confirmed (D13) |
 | Stripe verification delays | Medium | Medium | Started in Phase 0 |
 | Squarespace images lost | Low | High | Downloaded in Phase 1 before any cancellation |
 | Ranking drop from slug changes | Low | Medium | 301s + CI verification; young site, low equity |
 | No SEO baseline | **Certain today** | Medium | GSC set up in Phase 0 — the earlier the better |
-| Double-sell | Low | Low | Accepted (D7); refund + apologise |
+| Double-sell | **Very low** | Low | Only 1 live finite-stock product (§7.4); accepted (D7) |
+| Dormant sale price activated by accident | Medium | **High** | Schema removes the `onSale` flag entirely (§6); importer rejects implausible values |
+| Size-variant price undercharged | Low | Medium | Checkout keys on `(slug, size)`, not slug (§7.2) |
 | Samantha finds CMS hard | Medium | Medium | UAT gate at 6.2 — she must succeed unaided |
 | Build breaks, she can't publish | Low | Medium | CI on PRs; Fern on call; last good deploy stays live |
 | Staging indexed by Google | Low | Medium | Access + `noindex` from day one |
@@ -721,7 +835,7 @@ Fern offered more captures. Most useful, in order:
 
 ## 16. Definition of done
 
-- [ ] All 17 URLs resolve; every legacy URL 301s correctly
+- [ ] All 19 URLs resolve; all 13 legacy product URLs 301 correctly
 - [ ] A real purchase completes end-to-end, with the ring size reaching Samantha
 - [ ] Samantha adds a ring and marks one sold, **unaided**
 - [ ] Lighthouse ≥ 95 mobile on home, shop, and a product page
@@ -745,6 +859,9 @@ Fern offered more captures. Most useful, in order:
 | SKU prefix | `SQ…` (Squarespace-generated; not reused) |
 | Canonical host | `www.boldermade.ca` |
 | Known sample | opal shark sz 10 — CAD $300.00, SKU `SQ7847580`, `InStock` |
+| Products export | `data/squarespace-products-export-2026-09-13.csv` (12 products, 15 orphan variant rows) |
+| Currency | **CAD** |
+| Total product images | 57 |
 
 ## Appendix B — Assumptions
 
@@ -752,7 +869,8 @@ Recorded so a reviewer can challenge them:
 
 1. `www` stays canonical.
 2. Sold rings keep their pages indefinitely (D8).
-3. Made-to-order rings have no stock limit.
+2b. The 5 dormant sale prices are stale, not pending.
+3. `Unlimited` stock is deliberate and accurate — Samantha can remake those pieces.
 4. Stripe's own receipt is sufficient for the customer.
 5. Samantha will use the Stripe mobile app for order notifications.
 6. No customer accounts are needed — guest checkout only.

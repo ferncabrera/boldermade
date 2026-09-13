@@ -18,13 +18,18 @@ rendered Astro site on Cloudflare, with Stripe Checkout and a git-backed CMS.
 |---|---|
 | `docs/MIGRATION_PLAN.md` | The migration plan |
 | `html/` | Squarespace page captures used for the audit (reference only; removed after cutover) |
+| `data/` | Squarespace products CSV export — the authoritative import source |
 
 ## Before any code is written
 
 Phase 0 of the plan must be closed out first. In particular:
 
-1. **Confirm the currency** — the brief said USD, the live product markup says `CAD`.
+1. **Get the shipping zones and rates** — the last thing blocking checkout work.
 2. **Set up Google Search Console** on the current Squarespace site — there is no
    SEO baseline today, and every week it runs before cutover is a week of data.
 3. **Sort out the domain** — `boldermade.ca` is registered at Squarespace and must
    be transferred out *before* that subscription is cancelled.
+
+Separately, and not part of the migration: the `leap ring` listing has a dormant
+sale price of **$2.30** against a $280 list price. If anyone toggles "On Sale" on
+that product it sells for $2.30. Worth fixing in Squarespace today.
