@@ -109,7 +109,7 @@ type Variant = { size: string; price: number; salePrice?: number; stock: string 
 
 interface Product {
   slug: string; title: string; status: 'published' | 'draft';
-  sizing: 'fixed' | 'variants' | 'adjustable';
+  sizing: 'fixed' | 'any' | 'variants' | 'adjustable';
   fixedSize: string; sizeRange: string;
   variants: Variant[]; materials: string[]; stone: string;
   images: { key: string; alt: string; src: string }[];
@@ -184,6 +184,9 @@ function main() {
         current.sizing = 'adjustable';
         current.sizeRange = sizeInTitle ?? '';
       } else if (/made to order/i.test(title)) {
+        // Refined after import: a made-to-order ring with per-size rows keeps
+        // 'variants'; one with no size rows is cast at whatever size is ordered,
+        // which is 'any' — one price, but the size still has to be captured.
         current.sizing = 'variants';
       } else {
         current.sizing = 'fixed';
@@ -205,7 +208,9 @@ function main() {
     }
     if (p.sizing !== 'variants') p.variants = p.variants.map((v) => ({ ...v, size: '' }));
     if (p.sizing === 'variants' && p.variants.length <= 1) {
-      warnings.push(`${p.title}: marked made-to-order but has no size options (§14 Q14) — needs Samantha's list`);
+      p.sizing = 'any';
+      p.variants = p.variants.map((v) => ({ ...v, size: '' }));
+      warnings.push(`${p.title}: made to order with no per-size pricing -> sizing "any" (one price, customer picks any standard size)`);
     }
     if (!p.variants.length) errors.push(`${p.title}: no pricing rows at all`);
   }
@@ -261,7 +266,7 @@ function main() {
   mkdirSync(join(ROOT, 'data'), { recursive: true });
   writeFileSync(join(ROOT, 'data/image-manifest.json'), JSON.stringify(manifest, null, 2));
 
-  console.log(`\n✓ ${products.length} products -> src/content/products/`);
+  console.log(`\n✓ ${products.length} products -> content/products/`);
   console.log(`✓ ${manifest.length} images -> data/image-manifest.json`);
   const pub = products.filter((p) => p.status === 'published').length;
   console.log(`  ${pub} published, ${products.length - pub} draft`);

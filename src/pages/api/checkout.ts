@@ -2,8 +2,17 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
-import { buildCatalog, type CatalogEntry } from '../../lib/catalog.ts';
+import catalog from '../../generated/catalog.json' with { type: 'json' };
 import { getShippingOptions, allowedCountries } from '../../lib/shipping.ts';
+import { isStandardSize } from '../../lib/sizes.ts';
+
+/**
+ * The catalog is a FROZEN JSON artifact generated before `astro build`, not a
+ * live read of the content files. Keystatic's reader needs node:fs and
+ * process.cwd(); a Worker has neither, so importing it here would bundle
+ * `readdir` into the Worker and fail every checkout at runtime.
+ */
+type CatalogEntry = (typeof catalog)[number];
 
 /**
  * Creates a Stripe Checkout session.
@@ -43,8 +52,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
   if (!items.length) return json({ error: 'Your cart is empty.' }, 400);
   if (items.length > MAX_LINES) return json({ error: 'Too many items.' }, 400);
 
-  const catalog: CatalogEntry[] = await buildCatalog();
-  const bySlug = new Map(catalog.map((c) => [c.slug, c]));
+  const bySlug = new Map((catalog as CatalogEntry[]).map((c) => [c.slug, c]));
 
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
   const metadata: Record<string, string> = {};
@@ -61,10 +69,17 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
     const product = bySlug.get(slug);
     if (!product) return json({ error: 'One of those rings is no longer available.' }, 409);
 
+    // Made-to-order rings cast at any size have ONE price but still need the
+    // size captured — Samantha cannot make the ring otherwise.
+    if (product.sizing === 'any') {
+      if (!size) return json({ error: `Please choose a size for ${product.title}.` }, 400);
+      if (!isStandardSize(size)) return json({ error: `That is not a ring size we can cast.` }, 400);
+    }
+
     const variant =
-      product.variants.length === 1
-        ? product.variants[0]
-        : product.variants.find((v) => v.size === size);
+      product.sizing === 'variants'
+        ? product.variants.find((v) => v.size === size)
+        : product.variants[0];
     if (!variant) return json({ error: `Please choose a size for ${product.title}.` }, 400);
 
     // Finite-stock guard. Best-effort by design (MIGRATION_PLAN §7.4): KV is

@@ -1,0 +1,227 @@
+[
+  {
+    "slug": "bolder-bird",
+    "title": "bolder bird",
+    "sizing": "variants",
+    "anySizes": [],
+    "variants": [
+      {
+        "size": "7",
+        "price": 29000,
+        "stock": null
+      },
+      {
+        "size": "8",
+        "price": 30000,
+        "stock": null
+      },
+      {
+        "size": "9",
+        "price": 31000,
+        "stock": null
+      },
+      {
+        "size": "10",
+        "price": 32000,
+        "stock": null
+      },
+      {
+        "size": "11",
+        "price": 33000,
+        "stock": null
+      },
+      {
+        "size": "12",
+        "price": 34000,
+        "stock": null
+      }
+    ]
+  },
+  {
+    "slug": "drippy-honey",
+    "title": "drippy honey",
+    "sizing": "any",
+    "anySizes": [
+      "4",
+      "4.5",
+      "5",
+      "5.5",
+      "6",
+      "6.5",
+      "7",
+      "7.5",
+      "8",
+      "8.5",
+      "9",
+      "9.5",
+      "10",
+      "10.5",
+      "11",
+      "11.5",
+      "12",
+      "12.5",
+      "13"
+    ],
+    "variants": [
+      {
+        "size": "",
+        "price": 27500,
+        "stock": null
+      }
+    ]
+  },
+  {
+    "slug": "jelly-bean-opal-ring-sz-7-25",
+    "title": "jelly bean opal ring sz 7.25",
+    "sizing": "fixed",
+    "anySizes": [],
+    "variants": [
+      {
+        "size": "",
+        "price": 15000,
+        "stock": 0
+      }
+    ]
+  },
+  {
+    "slug": "leap-ring-sz-10",
+    "title": "leap ring sz 10",
+    "sizing": "fixed",
+    "anySizes": [],
+    "variants": [
+      {
+        "size": "",
+        "price": 28000,
+        "stock": 1
+      }
+    ]
+  },
+  {
+    "slug": "opal-shark-sz-10",
+    "title": "opal shark sz 10",
+    "sizing": "fixed",
+    "anySizes": [],
+    "variants": [
+      {
+        "size": "",
+        "price": 30000,
+        "stock": null
+      }
+    ]
+  },
+  {
+    "slug": "ruby-shark-sz-4-75",
+    "title": "ruby shark sz 4.75",
+    "sizing": "fixed",
+    "anySizes": [],
+    "variants": [
+      {
+        "size": "",
+        "price": 20000,
+        "stock": null
+      }
+    ]
+  },
+  {
+    "slug": "ruby-tiger-sz-9-5",
+    "title": "ruby tiger sz 9.5",
+    "sizing": "fixed",
+    "anySizes": [],
+    "variants": [
+      {
+        "size": "",
+        "price": 21500,
+        "stock": null
+      }
+    ]
+  },
+  {
+    "slug": "textured-citrine-sz-6",
+    "title": "textured citrine sz 6",
+    "sizing": "fixed",
+    "anySizes": [],
+    "variants": [
+      {
+        "size": "",
+        "price": 11000,
+        "stock": 0
+      }
+    ]
+  },
+  {
+    "slug": "toad-ring",
+    "title": "toad ring",
+    "sizing": "variants",
+    "anySizes": [],
+    "variants": [
+      {
+        "size": "6",
+        "price": 9000,
+        "stock": null
+      },
+      {
+        "size": "6.5",
+        "price": 9500,
+        "stock": null
+      },
+      {
+        "size": "7",
+        "price": 10000,
+        "stock": null
+      },
+      {
+        "size": "7.5",
+        "price": 10500,
+        "stock": null
+      },
+      {
+        "size": "8",
+        "price": 11000,
+        "stock": null
+      },
+      {
+        "size": "8.5",
+        "price": 11500,
+        "stock": null
+      },
+      {
+        "size": "9",
+        "price": 12000,
+        "stock": null
+      },
+      {
+        "size": "9.5",
+        "price": 12500,
+        "stock": null
+      },
+      {
+        "size": "10",
+        "price": 13000,
+        "stock": null
+      },
+      {
+        "size": "10.5",
+        "price": 13500,
+        "stock": null
+      },
+      {
+        "size": "11",
+        "price": 14000,
+        "stock": null
+      }
+    ]
+  },
+  {
+    "slug": "tri-boulder-opal-sz-9",
+    "title": "tri boulder opal sz 9",
+    "sizing": "fixed",
+    "anySizes": [],
+    "variants": [
+      {
+        "size": "",
+        "price": 18000,
+        "stock": null
+      }
+    ]
+  }
+]

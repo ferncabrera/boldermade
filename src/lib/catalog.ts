@@ -8,10 +8,11 @@
 import { createReader } from '@keystatic/core/reader';
 import Markdoc from '@markdoc/markdoc';
 import keystaticConfig from '../../keystatic.config.ts';
+import { STANDARD_RING_SIZES } from './sizes.ts';
 
 const reader = createReader(process.cwd(), keystaticConfig);
 
-export type Sizing = 'fixed' | 'variants' | 'adjustable';
+export type Sizing = 'fixed' | 'any' | 'variants' | 'adjustable';
 
 export interface Variant {
   size: string;
@@ -162,6 +163,9 @@ export async function getProduct(slug: string): Promise<Product | undefined> {
  * Resolve a (slug, size) pair to its variant. The lookup key is the PAIR, not
  * the slug: bolder bird is $290 at size 7 and $340 at size 12, so a slug-only
  * lookup would undercharge by up to $50.
+ *
+ * 'any' sizing has a single price but still CAPTURES the chosen size — without
+ * it Samantha does not know what to cast.
  */
 export function findVariant(product: Product, size: string | undefined): Variant | undefined {
   if (product.sizing !== 'variants') return product.variants[0];
@@ -172,6 +176,9 @@ export function findVariant(product: Product, size: string | undefined): Variant
 export interface CatalogEntry {
   slug: string;
   title: string;
+  sizing: Sizing;
+  /** Sizes a customer may choose when sizing === 'any'. */
+  anySizes: string[];
   variants: { size: string; price: number; stock: number | null }[];
 }
 
@@ -179,6 +186,8 @@ export async function buildCatalog(): Promise<CatalogEntry[]> {
   return (await getPublishedProducts()).map((p) => ({
     slug: p.slug,
     title: p.displayTitle,
+    sizing: p.sizing,
+    anySizes: p.sizing === 'any' ? [...STANDARD_RING_SIZES] : [],
     variants: p.variants.map((v) => ({ size: v.size, price: v.effectivePrice, stock: v.stock })),
   }));
 }

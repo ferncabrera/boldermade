@@ -40,8 +40,11 @@ Everything else should feel familiar.
    to **Published** when you're ready.
 4. Choose the **Sizing**:
    - **Fixed size** — a one-off piece in one size. Put the size in the Size box.
-   - **Customer picks a size** — made-to-order. Add one row per size under
-     Pricing & stock, each with its own price.
+   - **Any size** — made to order, cast at whatever size they pick, same price
+     whatever the size. Add **one** row under Pricing & stock. The customer still
+     chooses a size at checkout and it comes through on your order email.
+   - **Price varies per size** — made to order where bigger sizes cost more, like
+     bolder bird and toad ring. Add one row per size, each with its own price.
    - **Adjustable** — fits a range. Put the range in, like `8-9.5`.
 5. Under **Pricing & stock**, add the price **in cents**. $290 is `29000`.
    This looks odd but it means a price can never be wrong by a rounding error.
@@ -92,6 +95,18 @@ Instead:
 
 It works from your phone, nothing appears in the public shop, and two
 commissions can run at once without interfering.
+
+---
+
+## Changing shipping prices
+
+**Settings** → **Shipping**. Each zone has a name, the countries it covers, the
+price in cents, and how many business days it takes.
+
+The rates in there now are **sensible guesses, not your real ones**. Until you
+replace them and untick "These rates are still provisional", the shipping page
+shows a warning. Customers are charged whatever is in there, so it's worth doing
+early.
 
 ---
 

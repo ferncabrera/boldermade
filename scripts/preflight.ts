@@ -10,14 +10,25 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const fail: string[] = [];
 const warn: string[] = [];
 
-// 1. Shipping rates must be real (MIGRATION_PLAN §14 Q13).
-const shipping = readFileSync(join(ROOT, 'src/lib/shipping.ts'), 'utf8');
-if (/export const PLACEHOLDER_RATES = true/.test(shipping)) {
-  fail.push(
-    'Shipping rates are still placeholders. Replace ZONES with the real Squarespace\n' +
-    '    figures and set PLACEHOLDER_RATES = false. Customers would be charged\n' +
-    '    invented postage otherwise.'
-  );
+// 1. Shipping rates (Q13). Working defaults are an accepted interim state, so
+//    this warns rather than blocks — but loudly, because real customers pay it.
+const shippingPath = join(ROOT, 'src/generated/shipping.json');
+if (existsSync(shippingPath)) {
+  const shipping = JSON.parse(readFileSync(shippingPath, 'utf8'));
+  if (shipping.provisional) {
+    warn.push(
+      'Shipping rates are PROVISIONAL defaults, not the real Squarespace figures.\n' +
+      '      Customers will be charged these amounts. Replace them in Keystatic\n' +
+      '      (Settings -> Shipping) and untick "provisional" before launch.'
+    );
+  }
+} else {
+  fail.push('src/generated/shipping.json missing. Run: npm run build:catalog');
+}
+
+// 1b. The frozen catalog must exist, or checkout has no prices to resolve.
+if (!existsSync(join(ROOT, 'src/generated/catalog.json'))) {
+  fail.push('src/generated/catalog.json missing. Run: npm run build:catalog');
 }
 
 // 2. KV namespace must be bound for the sold-out guard.

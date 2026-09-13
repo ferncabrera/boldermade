@@ -1,13 +1,28 @@
 ---
 import type { Product } from '../lib/catalog.ts';
 import { formatPriceShort } from '../lib/money.ts';
+import { STANDARD_RING_SIZES } from '../lib/sizes.ts';
 
 interface Props { product: Product }
 const { product } = Astro.props;
 
-const needsSize = product.sizing === 'variants' && product.variants.length > 1;
+/* Two ways a customer picks a size:
+   'variants' — a listed size with its own price
+   'any'      — made to order at any standard size, single price
+   Either way the size must be captured, or Samantha cannot cast the ring. */
 const priceVaries = new Set(product.variants.map((v) => v.effectivePrice)).size > 1;
 const selectable = product.variants.filter((v) => !v.soldOut);
+
+const sizeOptions: { value: string; label: string }[] =
+  product.sizing === 'any'
+    ? STANDARD_RING_SIZES.map((s) => ({ value: s, label: s }))
+    : selectable.map((v) => ({
+        value: v.size,
+        label: priceVaries ? `${v.size} — ${formatPriceShort(v.effectivePrice)}` : v.size,
+      }));
+
+const needsSize =
+  product.sizing === 'any' || (product.sizing === 'variants' && product.variants.length > 1);
 ---
 
 <div class="atc" data-add-to-cart data-slug={product.slug}>
@@ -16,15 +31,15 @@ const selectable = product.variants.filter((v) => !v.soldOut);
       <label class="atc__label" for={`size-${product.slug}`}>
         Ring size
         {priceVaries && <span class="atc__hint">price varies by size</span>}
+        {product.sizing === 'any' && <span class="atc__hint">made to your size</span>}
       </label>
       <select class="atc__select" id={`size-${product.slug}`} data-size-select required>
         <option value="" disabled selected>Choose a size</option>
-        {selectable.map((v) => (
-          <option value={v.size} data-price={v.effectivePrice}>
-            {v.size}{priceVaries ? ` — ${formatPriceShort(v.effectivePrice)}` : ''}
-          </option>
-        ))}
+        {sizeOptions.map((o) => <option value={o.value}>{o.label}</option>)}
       </select>
+      <p class="atc__help">
+        Not sure? <a href="/sizing">How to measure your ring size</a>
+      </p>
     </div>
   )}
 
@@ -59,6 +74,8 @@ const selectable = product.variants.filter((v) => !v.soldOut);
     font-size: var(--t-base);
   }
   .atc__msg { margin: 0; font-size: var(--t-sm); color: var(--c-text-muted); }
+  .atc__help { margin: 0; font-size: var(--t-xs); color: var(--c-text-muted); }
+  .atc__help a { text-decoration: underline; }
 </style>
 
 <script>

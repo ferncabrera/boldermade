@@ -75,10 +75,11 @@ export default config({
         sizing: fields.select({
           label: 'Sizing',
           description:
-            'Fixed = one size, baked into the name. Variants = customer chooses, price can differ per size. Adjustable = fits a range.',
+            'Fixed = one size, baked into the ring name. Any size = made to order, one price, customer picks any standard size. Price per size = made to order where larger sizes cost more. Adjustable = fits a range.',
           options: [
             { label: 'Fixed size', value: 'fixed' },
-            { label: 'Customer picks a size', value: 'variants' },
+            { label: 'Any size (made to order, one price)', value: 'any' },
+            { label: 'Price varies per size', value: 'variants' },
             { label: 'Adjustable', value: 'adjustable' },
           ],
           defaultValue: 'fixed',
@@ -88,7 +89,7 @@ export default config({
 
         variants: fields.array(variant, {
           label: 'Pricing & stock',
-          description: 'Fixed and adjustable rings need exactly one entry.',
+          description: 'Fixed, any-size and adjustable rings need exactly one entry. Only "price varies per size" needs one per size.',
           itemLabel: (p) => `${p.fields.size.value || 'one size'} — $${(p.fields.price.value ?? 0) / 100}`,
           validation: { length: { min: 1 } },
         }),
@@ -174,6 +175,12 @@ export default config({
       label: 'Shipping',
       path: 'content/settings/shipping',
       schema: {
+        provisional: fields.checkbox({
+          label: 'These rates are still provisional',
+          description:
+            'Tick while the rates are working defaults rather than the real ones. Shows a warning banner on the shipping page and in preflight.',
+          defaultValue: true,
+        }),
         zones: fields.array(
           fields.object({
             label: fields.text({ label: 'Zone name', validation: { isRequired: true } }),
@@ -181,10 +188,15 @@ export default config({
               label: 'Countries (ISO 2-letter, e.g. CA, US)',
               itemLabel: (p) => p.value ?? '',
             }),
-            rate: cents('Rate (CAD cents)'),
-            deliveryEstimate: fields.text({ label: 'Delivery estimate', description: 'e.g. 5–10 business days' }),
+            rate: cents('Rate (CAD cents)', 'e.g. 1500 = $15.00'),
+            minDays: fields.integer({ label: 'Fastest (business days)', validation: { isRequired: true, min: 1 } }),
+            maxDays: fields.integer({ label: 'Slowest (business days)', validation: { isRequired: true, min: 1 } }),
           }),
-          { label: 'Zones', itemLabel: (p) => `${p.fields.label.value} — $${(p.fields.rate.value ?? 0) / 100}` }
+          {
+            label: 'Zones',
+            itemLabel: (p) => `${p.fields.label.value} — $${(p.fields.rate.value ?? 0) / 100}`,
+            validation: { length: { min: 1 } },
+          }
         ),
       },
     }),

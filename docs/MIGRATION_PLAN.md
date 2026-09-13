@@ -100,8 +100,14 @@ for a different and better reason than originally argued.
 *independent* properties, and the schema in §6 models them separately:
 
 - **stock** — a finite integer, or unlimited
-- **sizing** — `fixed` (size baked into the name), `variants` (customer picks,
-  price varies), or `adjustable`
+- **sizing** — one of four modes:
+  - `fixed` — one size, baked into the ring name
+  - `any` — made to order, cast at whatever size is ordered, **one price**
+  - `variants` — made to order where larger sizes cost more, **price per size**
+  - `adjustable` — fits a range
+
+  `any` and `variants` both capture the chosen size. That matters: without it
+  Samantha does not know what to cast.
 
 `opal shark sz 10` is a fixed-size ring with unlimited stock — a combination the
 original enum could not express.
@@ -787,12 +793,13 @@ After Squarespace is cancelled there is no rollback. That is the point of the
 | ~~Q3~~ | Shipping model | **Flat rate per destination zone** (D17). *Rates still needed — see Q13* |
 | ~~Q5~~ | Which products are sold out | textured citrine and jelly bean opal (stock 0) |
 | ~~Q8~~ | Custom ring payment listing | Still live as a non-physical product; replaced by Payment Links (§7.5) |
+| ~~Q14~~ | `drippy honey` sizes | **Cast at any size on order.** Drove a new `sizing: 'any'` mode — one price, customer picks any standard size, size captured for the order |
 
 ### 14.2 Still open
 
 | # | Question | Blocks | Why it matters |
 |---|---|---|---|
-| **Q13** | **Exact shipping zones and rates** | **Phase 4** | The only remaining checkout blocker. Model is settled; the numbers are not |
+| Q13 | Real shipping rates | Launch | **Interim defaults accepted** — working rates now live in Keystatic (Settings → Shipping) and ship with `provisional: true`. Preflight warns; the shipping page shows a banner. Replace before launch |
 | Q2 | Was there an earlier site before 2025-07-01? (§2.3) | Phase 0 | Changes the SEO risk model; may add redirects |
 | Q4 | GST/HST registration status | Phase 0 | A Canadian business over the CRA small-supplier threshold must register. **An accountant's question, not an engineering one** — flagged, not decided here |
 | Q6 | Squarespace renewal date | Phase 0 | Sets the outer deadline |
@@ -801,7 +808,6 @@ After Squarespace is cancelled there is no rollback. That is the point of the
 | Q10 | Instagram shopping tags pointing at product URLs? | Phase 5 | Would need retagging after slug changes |
 | Q11 | Brand assets — logo source, fonts | Phase 2 | Squarespace inlined the fonts; originals preferred |
 | Q12 | Return/refund policy wording | Phase 5 | Stripe requires a published policy |
-| **Q14** | **`drippy honey` size options** | Phase 3 | Marked made-to-order with no sizes, but its own copy says "different colours and sizes". Needs the real size/price list |
 | **Q15** | **Why are the 2 hidden products hidden?** | Phase 3 | Imported as drafts either way (D16), but determines whether they should later publish as available or sold |
 | **Q16** | **Is `traveling stones` still on sale at $190?** | Phase 3 | It is flagged On Sale but hidden, so the sale may be stale |
 | Q17 | Confirm `www` vs apex as canonical | Phase 7 | Current canonical is `www` — keep it |
@@ -893,7 +899,8 @@ Built and verified in-repo. Not deployed — no Cloudflare resources exist yet.
 | Product import | 12 products from the CSV; 10 published, 2 draft |
 | Storefront | Home, shop, product detail, about/FAQ, customs, contact, sizing, cart, 404, 3 policy pages |
 | Cart + checkout UI | nanostores + vanilla web components |
-| `/api/checkout` | Server-side pricing, `(slug,size)` lookup, KV stock guard |
+| `/api/checkout` | Server-side pricing from a frozen catalog, `(slug,size)` lookup, KV stock guard |
+| Shipping | 3 zones, editable in Keystatic; frozen to JSON at build |
 | `/api/webhook` | Async signature verification, KV write, order email |
 | `/api/contact` | Honeypot, length caps, Resend delivery |
 | `/img/*` | R2 origin + Image Transformations via fetch subrequest |
@@ -920,17 +927,27 @@ Recorded because each would have shipped silently:
    proxy would have served full-size originals while appearing to work.
 4. **Slug prefix vs suffix.** `one of a kind | leap ring` puts the marker before
    the name; stripping the suffix first produced an empty slug.
+5. **The checkout Worker read the filesystem.** `/api/checkout` imported the
+   Keystatic reader, which uses `node:fs` and `process.cwd()`. A Worker has
+   neither, so `readdir` was bundled into the Worker and **every checkout would
+   have failed in production** — with a clean build and no warning. The catalog
+   is now frozen to `src/generated/catalog.json` before `astro build`, which is
+   what §7.2 described all along. Verified: zero `node:fs` references in the
+   built Worker.
+6. **The cart drawer priced `any`-size rings at $0.** It keyed prices by size,
+   but an `any`-size ring stores an empty size while the cart line carries the
+   customer's choice, so the lookup missed. Drawer and checkout now resolve
+   prices the same way; a mismatch between them is the failure mode to watch.
 
 ### 17.3 Blocked on external input
 
 | Item | Blocked by |
 |---|---|
-| **Product images** | Egress policy blocks `images.squarespace-cdn.com` from this environment. `npm run fetch:images` must run on Fern's machine. **Most time-critical task in the project** — these URLs die with the subscription |
-| Shipping rates | Q13. `PLACEHOLDER_RATES = true` fails preflight until replaced |
-| Alt text | 57/57 provisional. `npm run audit:alt` |
-| KV namespace | `wrangler kv namespace create SOLD` |
+| **R2 upload** | All 57 images downloaded successfully (7.4 MB). Upload needs Cloudflare auth (`wrangler login`) and the bucket to exist |
+| KV namespace | `wrangler kv namespace create SOLD` — the only hard preflight failure |
 | Stripe keys | Account must exist first (Phase 0.4) |
-| drippy honey sizes | Q14 |
+| Real shipping rates | Q13 — defaults accepted for now |
+| Alt text | 57/57 provisional. `npm run audit:alt` |
 
 ### 17.4 Deliberate deviations from the plan as written
 
@@ -943,3 +960,7 @@ Recorded because each would have shipped silently:
   the generated form is more descriptive.
 - **Policy pages carry visible draft banners** until Samantha signs off the
   wording (Q12). Preflight warns while they remain.
+- **Provisional shipping rates warn rather than block.** §12 task 0 had them
+  failing preflight. Fern accepted working defaults as an interim state, so the
+  gate is now a loud warning plus a banner on `/policies/shipping`. Real
+  customers are still charged these amounts — replace before launch.

@@ -1,0 +1,51 @@
+{
+  "provisional": true,
+  "zones": [
+    {
+      "label": "Canada",
+      "countries": [
+        "CA"
+      ],
+      "rate": 1500,
+      "minDays": 3,
+      "maxDays": 8
+    },
+    {
+      "label": "United States",
+      "countries": [
+        "US"
+      ],
+      "rate": 2500,
+      "minDays": 5,
+      "maxDays": 12
+    },
+    {
+      "label": "International",
+      "countries": [
+        "GB",
+        "AU",
+        "NZ",
+        "IE",
+        "FR",
+        "DE",
+        "NL",
+        "BE",
+        "DK",
+        "SE",
+        "NO",
+        "FI",
+        "IT",
+        "ES",
+        "PT",
+        "AT",
+        "CH",
+        "JP",
+        "SG",
+        "KR"
+      ],
+      "rate": 3500,
+      "minDays": 10,
+      "maxDays": 21
+    }
+  ]
+}

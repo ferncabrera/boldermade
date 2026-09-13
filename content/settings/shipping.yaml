@@ -1,0 +1,46 @@
+# Flat-rate shipping by destination zone.
+#
+# These are WORKING DEFAULTS in the right ballpark for a small insured parcel
+# out of Toronto — not Samantha's real Squarespace rates. Replace them with the
+# real figures and untick `provisional`.
+#
+# Editable in Keystatic under Settings -> Shipping. Rates are content, not code.
+provisional: true
+zones:
+  - label: Canada
+    countries:
+      - CA
+    rate: 1500
+    minDays: 3
+    maxDays: 8
+  - label: United States
+    countries:
+      - US
+    rate: 2500
+    minDays: 5
+    maxDays: 12
+  - label: International
+    countries:
+      - GB
+      - AU
+      - NZ
+      - IE
+      - FR
+      - DE
+      - NL
+      - BE
+      - DK
+      - SE
+      - NO
+      - FI
+      - IT
+      - ES
+      - PT
+      - AT
+      - CH
+      - JP
+      - SG
+      - KR
+    rate: 3500
+    minDays: 10
+    maxDays: 21

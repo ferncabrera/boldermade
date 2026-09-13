@@ -15,7 +15,9 @@
     "audit:alt": "node --experimental-strip-types scripts/audit-alt.ts",
     "preflight": "node --experimental-strip-types scripts/preflight.ts",
     "fetch:images": "node --experimental-strip-types scripts/fetch-images.ts",
-    "upload:images": "bash scripts/upload-images.sh"
+    "upload:images": "bash scripts/upload-images.sh",
+    "build:catalog": "node --experimental-strip-types scripts/build-catalog.ts",
+    "prebuild": "npm run build:catalog"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.10",
@@ -35,6 +37,6 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "typescript": "^5.9.2",
-    "wrangler": "^4.40.0"
+    "wrangler": "^4.131.1"
   }
 }

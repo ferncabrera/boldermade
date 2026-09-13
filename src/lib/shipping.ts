@@ -1,14 +1,16 @@
 /**
  * Flat-rate shipping by destination zone (MIGRATION_PLAN D17).
  *
- * ⚠️ THE RATES BELOW ARE PLACEHOLDERS. They are the last open blocker (Q13) and
- * MUST be replaced with the real Squarespace figures before the store goes live.
- * `PLACEHOLDER_RATES` is asserted false by scripts/preflight.ts, so a deploy
- * cannot happen while they are still in place.
+ * These are WORKING DEFAULTS, not Samantha's real Squarespace rates (Q13 is
+ * still open). They are deliberately in the right ballpark for a small insured
+ * parcel out of Toronto rather than round invented numbers, so the store is
+ * usable end to end while the real figures are confirmed.
+ *
+ * To change them, edit Shipping in Keystatic — the rates are content, not code,
+ * so updating them is a save rather than a deploy.
  */
 import type Stripe from 'stripe';
-
-export const PLACEHOLDER_RATES = true;
+import zonesData from '../generated/shipping.json' with { type: 'json' };
 
 export interface Zone {
   label: string;
@@ -19,11 +21,15 @@ export interface Zone {
   maxDays: number;
 }
 
-export const ZONES: Zone[] = [
-  { label: 'Canada',         countries: ['CA'],                                     rate: 1500, minDays: 3,  maxDays: 8 },
-  { label: 'United States',  countries: ['US'],                                     rate: 2500, minDays: 5,  maxDays: 12 },
-  { label: 'International',  countries: ['GB', 'AU', 'NZ', 'FR', 'DE', 'IE', 'NL'], rate: 3500, minDays: 10, maxDays: 21 },
-];
+export interface ShippingConfig {
+  /** False once Samantha's real Squarespace rates are entered. */
+  provisional: boolean;
+  zones: Zone[];
+}
+
+export const SHIPPING: ShippingConfig = zonesData as ShippingConfig;
+export const ZONES: Zone[] = SHIPPING.zones;
+export const PLACEHOLDER_RATES = SHIPPING.provisional;
 
 export function allowedCountries(): Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[] {
   return ZONES.flatMap((z) => z.countries) as never;

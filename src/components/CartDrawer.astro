@@ -6,6 +6,10 @@ import { getPublishedProducts } from '../lib/catalog.ts';
    — it is display data, and the checkout Worker still resolves real prices
    server-side. */
 const products = await getPublishedProducts();
+/* `sizing` must travel with the price map. Only 'variants' rings price by size;
+   an 'any'-size ring has one price but the cart line still carries the chosen
+   size, so keying purely on size would miss and display $0. This mirrors the
+   resolution order in /api/checkout — the two must agree. */
 const lookup = Object.fromEntries(
   products.map((p) => [
     p.slug,
@@ -13,6 +17,8 @@ const lookup = Object.fromEntries(
       title: p.displayTitle,
       image: p.images[0]?.key ?? '',
       alt: p.images[0]?.alt ?? '',
+      sizing: p.sizing,
+      basePrice: p.variants[0]?.effectivePrice ?? 0,
       variants: Object.fromEntries(p.variants.map((v) => [v.size, v.effectivePrice])),
     },
   ])
@@ -97,7 +103,7 @@ const lookup = Object.fromEntries(
       .map((l) => {
         const p = catalog[l.slug];
         if (!p) return '';
-        const unit = p.variants[l.size] ?? 0;
+        const unit = p.sizing === 'variants' ? (p.variants[l.size] ?? 0) : p.basePrice;
         total += unit * l.qty;
         const sizeLabel = l.size ? `Size ${l.size}` : '';
         return `
