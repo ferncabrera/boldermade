@@ -2,6 +2,8 @@
 import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
+import react from '@astrojs/react';
+import keystatic from '@keystatic/astro';
 import { redirectsIntegration } from './src/integrations/redirects.ts';
 
 export const SITE = 'https://www.boldermade.ca';
@@ -14,6 +16,10 @@ export default defineConfig({
   adapter: cloudflare({ imageService: 'passthrough' }),
   integrations: [
     redirectsIntegration(),
+    // React and Keystatic are ADMIN ONLY. Both routes below are
+    // `prerender = false`, so no React reaches a customer-facing page.
+    react(),
+    keystatic(),
     sitemap({
       filter: (page) =>
         !page.includes('/keystatic') &&

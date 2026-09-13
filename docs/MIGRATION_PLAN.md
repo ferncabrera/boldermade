@@ -3,8 +3,8 @@
 **Site:** https://www.boldermade.ca — "bolder", handmade statement rings, Toronto, Canada
 **Owner / editor:** Samantha (non-technical)
 **Engineer:** Fern
-**Status:** Planning. No implementation has begun.
-**Last updated:** 2026-09-13
+**Status:** Phases 2–3 built; see §17 for what is live in the repo.
+**Last updated:** 2026-09-13 (implementation started)
 
 ---
 
@@ -876,3 +876,70 @@ Recorded so a reviewer can challenge them:
 6. No customer accounts are needed — guest checkout only.
 7. `html/` captures are representative of current production.
 8. No backlinks point at product slugs other than via the shop grid *(unverified — GSC would confirm)*.
+
+---
+
+## 17. Implementation status
+
+Built and verified in-repo. Not deployed — no Cloudflare resources exist yet.
+
+### 17.1 Done
+
+| Area | State |
+|---|---|
+| Astro 5 + Cloudflare adapter | Builds clean; 22 pages prerendered |
+| Design tokens | `src/styles/tokens.css` — every visual value is a token |
+| Keystatic schema | `keystatic.config.ts`; admin at `/keystatic` |
+| Product import | 12 products from the CSV; 10 published, 2 draft |
+| Storefront | Home, shop, product detail, about/FAQ, customs, contact, sizing, cart, 404, 3 policy pages |
+| Cart + checkout UI | nanostores + vanilla web components |
+| `/api/checkout` | Server-side pricing, `(slug,size)` lookup, KV stock guard |
+| `/api/webhook` | Async signature verification, KV write, order email |
+| `/api/contact` | Honeypot, length caps, Resend delivery |
+| `/img/*` | R2 origin + Image Transformations via fetch subrequest |
+| SEO | Every page: title, description, canonical, `og:image`, one `h1` |
+| Redirects | 14 rules generated from `legacySlugs` |
+| Scripts | `import-products`, `fetch-images`, `upload-images`, `audit-alt`, `preflight`, `verify-redirects` |
+| Samantha's runbook | `docs/EDITING.md` |
+
+**Customer-facing JS: 3.8 kB uncompressed (~1.8 kB gzipped).** React is pulled in
+only for the Keystatic admin bundle and is referenced by no public page —
+verified against the built output, not assumed.
+
+### 17.2 Bugs found by verifying output
+
+Recorded because each would have shipped silently:
+
+1. **Keystatic stores entries flat.** `<slug>.mdoc`, not `<slug>/index.mdoc`. The
+   importer wrote directories and the reader returned zero products.
+2. **`entry.description()` returns `{ node }`**, not a Markdoc node. Passing the
+   wrapper to `Markdoc.transform` yields empty output — which produced exactly
+   the missing meta descriptions this migration exists to fix. A `try/catch` was
+   hiding it; it has been removed so the build fails loudly instead.
+3. **`cf.image` applies to a fetch subrequest, not a Response.** The first image
+   proxy would have served full-size originals while appearing to work.
+4. **Slug prefix vs suffix.** `one of a kind | leap ring` puts the marker before
+   the name; stripping the suffix first produced an empty slug.
+
+### 17.3 Blocked on external input
+
+| Item | Blocked by |
+|---|---|
+| **Product images** | Egress policy blocks `images.squarespace-cdn.com` from this environment. `npm run fetch:images` must run on Fern's machine. **Most time-critical task in the project** — these URLs die with the subscription |
+| Shipping rates | Q13. `PLACEHOLDER_RATES = true` fails preflight until replaced |
+| Alt text | 57/57 provisional. `npm run audit:alt` |
+| KV namespace | `wrangler kv namespace create SOLD` |
+| Stripe keys | Account must exist first (Phase 0.4) |
+| drippy honey sizes | Q14 |
+
+### 17.4 Deliberate deviations from the plan as written
+
+- **Alt text does not fail the build.** §6.2 said it should. In practice that
+  blocks all progress before a single page can be viewed, so the importer writes
+  descriptive provisional text and `audit:alt` tracks the worklist. Preflight
+  warns; it does not block.
+- **`traveling-stones-adjustable-sz-8-9-5`** keeps its size range in the slug
+  rather than §8.3's shorter `traveling-stones-adjustable`. It is a draft, and
+  the generated form is more descriptive.
+- **Policy pages carry visible draft banners** until Samantha signs off the
+  wording (Q12). Preflight warns while they remain.
