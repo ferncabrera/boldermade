@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductGrid from '../../components/ProductGrid.astro';
+import { getPublishedProducts } from '../../lib/catalog.ts';
+import { breadcrumbLd } from '../../lib/seo.ts';
+
+const products = await getPublishedProducts();
+/* Available first, sold last — sold pieces stay live as portfolio (§D8) but
+   should not push purchasable rings below the fold. */
+const ordered = [...products].sort((a, b) => Number(a.soldOut) - Number(b.soldOut));
+const available = ordered.filter((p) => !p.soldOut).length;
+
+const jsonLd = [breadcrumbLd([{ name: 'Home', path: '/' }, { name: 'Shop', path: '/shop' }])];
+---
+
+<BaseLayout
+  title="Shop"
+  description="Every bolder ring currently available — one-of-a-kind pieces and made-to-order designs, handmade in Toronto. Prices in CAD, shipping worldwide."
+  path="/shop"
+  jsonLd={jsonLd}
+  wide
+>
+  <div class="container container--wide section">
+    <header class="shop__head">
+      <p class="eyebrow">the experimental collection</p>
+      <h1>Shop</h1>
+      <p class="lede">
+        {available} {available === 1 ? 'piece' : 'pieces'} available right now. Sold pieces stay
+        up so you can see the range — if something sold that you love,
+        <a href="/custom-work">a custom version</a> is usually possible.
+      </p>
+    </header>
+
+    <ProductGrid products={ordered} />
+  </div>
+</BaseLayout>
+
+<style>
+  .shop__head { max-width: var(--w-prose); margin-bottom: var(--s-7); }
+  .shop__head h1 { margin-block: var(--s-2) var(--s-4); }
+</style>

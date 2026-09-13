@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Page not found" description="That page doesn't exist." path="/404" noindex>
+  <div class="container section">
+    <div class="page">
+      <h1>That page doesn’t exist</h1>
+      <p class="lede">
+        It may have moved, or the ring may have sold. Sold pieces keep their pages, so it’s worth
+        checking the shop.
+      </p>
+      <a class="btn btn--primary btn--lg" href="/shop">Browse the shop</a>
+    </div>
+  </div>
+</BaseLayout>
+<style>
+  .page { max-width: var(--w-prose); }
+  .page h1 { margin-bottom: var(--s-4); }
+  .page .btn { margin-top: var(--s-5); }
+</style>

@@ -1,0 +1,86 @@
+---
+import CartButton from './CartButton.astro';
+
+const nav = [
+  { href: '/shop', label: 'Shop' },
+  { href: '/custom-work', label: 'Customs' },
+  { href: '/about', label: 'FAQ' },
+];
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || path.startsWith(href + '/');
+---
+
+<header class="header">
+  <div class="header__inner container container--wide">
+    <a href="/" class="header__brand" aria-label="bolder — home">bolder</a>
+
+    <nav class="header__nav" aria-label="Primary">
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          class:list={['header__link', isActive(item.href) && 'is-active']}
+          aria-current={isActive(item.href) ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <CartButton />
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+    background: color-mix(in srgb, var(--c-bg) 88%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--s-5);
+    min-height: 4rem;
+  }
+
+  .header__brand {
+    font-family: var(--font-display);
+    font-size: var(--t-lg);
+    color: var(--c-text-strong);
+    text-decoration: none;
+    letter-spacing: var(--ls-tight);
+    margin-right: auto;
+  }
+
+  .header__nav {
+    display: flex;
+    align-items: center;
+    gap: var(--s-5);
+  }
+
+  .header__link {
+    font-size: var(--t-sm);
+    letter-spacing: var(--ls-wide);
+    text-transform: lowercase;
+    color: var(--c-text-muted);
+    text-decoration: none;
+    padding-block: var(--s-2);
+    border-bottom: 1px solid transparent;
+    transition: color var(--d-fast) var(--e-out), border-color var(--d-fast) var(--e-out);
+  }
+  .header__link:hover { color: var(--c-text-strong); }
+  .header__link.is-active {
+    color: var(--c-text-strong);
+    border-bottom-color: var(--c-text-strong);
+  }
+
+  @media (max-width: 34rem) {
+    .header__inner { gap: var(--s-3); }
+    .header__nav { gap: var(--s-3); }
+    .header__link { font-size: var(--t-xs); }
+  }
+</style>

@@ -1,0 +1,61 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Privacy"
+  description="What bolder collects, why, and who processes it. Payments are handled by Stripe; no card details ever reach this site."
+  path="/policies/privacy"
+>
+  <div class="container section">
+    <div class="page prose">
+      <h1>Privacy</h1>
+
+      <p class="draft-warning">
+        <strong>Draft:</strong> review before publishing. Accurate as to how the site is built,
+        but not legal advice.
+      </p>
+
+      <p class="lede">
+        bolder is a one-person studio in Toronto. This site collects as little as it can.
+      </p>
+
+      <h2>What is collected</h2>
+      <ul>
+        <li><strong>Orders</strong> — your name, email and shipping address, so your ring can reach you.</li>
+        <li><strong>Custom requests</strong> — whatever you enter in the form, so I can reply.</li>
+        <li><strong>Your cart</strong> — stored in your own browser. It never leaves your device until you check out.</li>
+      </ul>
+
+      <h2>Payments</h2>
+      <p>
+        Payments are processed by <a href="https://stripe.com/privacy" rel="noopener" target="_blank">Stripe</a>.
+        Card details are entered on Stripe’s own checkout and never touch this site or its servers.
+      </p>
+
+      <h2>Who else sees your data</h2>
+      <ul>
+        <li><strong>Stripe</strong> — payment processing and order records.</li>
+        <li><strong>Cloudflare</strong> — hosting and content delivery.</li>
+        <li><strong>Resend</strong> — delivering order and enquiry emails.</li>
+      </ul>
+      <p>Your information is never sold or shared for advertising.</p>
+
+      <h2>Cookies</h2>
+      <p>
+        No advertising or tracking cookies are set. Your cart uses your browser’s local storage,
+        which stays on your device.
+      </p>
+
+      <h2>Your rights</h2>
+      <p>
+        Email <a href="mailto:boldermade@gmail.com">boldermade@gmail.com</a> to ask what is held
+        about you, or to have it deleted.
+      </p>
+    </div>
+  </div>
+</BaseLayout>
+<style>
+  .page { max-width: var(--w-prose); }
+  .page h1 { margin-bottom: var(--s-4); }
+  .draft-warning { padding: var(--s-4); border: 1px solid var(--c-sale); border-radius: var(--r-md); color: var(--c-sale); font-size: var(--t-sm); }
+</style>

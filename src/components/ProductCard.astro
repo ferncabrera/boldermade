@@ -1,0 +1,94 @@
+---
+import type { Product } from '../lib/catalog.ts';
+import { imgUrl, srcSet, GRID_WIDTHS } from '../lib/images.ts';
+import Price from './Price.astro';
+import Badge from './Badge.astro';
+
+interface Props { product: Product; eager?: boolean }
+const { product, eager = false } = Astro.props;
+
+const cover = product.images[0];
+const cheapest = product.variants.reduce(
+  (best, v) => (v.effectivePrice < best.effectivePrice ? v : best),
+  product.variants[0]!
+);
+const showFrom = product.sizing === 'variants' && new Set(product.variants.map((v) => v.effectivePrice)).size > 1;
+---
+
+<article class:list={['card', product.soldOut && 'is-sold']}>
+  <a class="card__link" href={`/shop/p/${product.slug}`}>
+    <div class="card__media">
+      {cover ? (
+        <img
+          src={imgUrl(cover.key, { width: 640 })}
+          srcset={srcSet(cover.key, GRID_WIDTHS)}
+          sizes="(max-width: 40rem) 50vw, (max-width: 70rem) 33vw, 25vw"
+          alt={cover.alt}
+          width="640"
+          height="800"
+          loading={eager ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+      ) : (
+        <div class="card__placeholder" aria-hidden="true"></div>
+      )}
+
+      <div class="card__flags">
+        {product.soldOut && <Badge tone="sold">Sold</Badge>}
+        {!product.soldOut && cheapest.onSale && <Badge tone="sale">Sale</Badge>}
+        {!product.soldOut && product.madeToOrder && <Badge tone="made">Made to order</Badge>}
+      </div>
+    </div>
+
+    <div class="card__body">
+      <h3 class="card__title">{product.displayTitle}</h3>
+      <Price
+        price={cheapest.price}
+        salePrice={cheapest.onSale ? cheapest.salePrice : undefined}
+        from={showFrom}
+        size="sm"
+      />
+    </div>
+  </a>
+</article>
+
+<style>
+  .card__link { display: block; text-decoration: none; color: inherit; }
+
+  .card__media {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    background: var(--c-bg-sunken);
+    border-radius: var(--r-md);
+    overflow: hidden;
+  }
+  .card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--d-slow) var(--e-out), opacity var(--d-base) var(--e-out);
+  }
+  .card__link:hover .card__media img { transform: scale(1.03); }
+  .is-sold .card__media img { opacity: 0.62; }
+
+  .card__placeholder { width: 100%; height: 100%; background: var(--c-bg-sunken); }
+
+  .card__flags {
+    position: absolute;
+    inset-block-start: var(--s-3);
+    inset-inline-start: var(--s-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+
+  .card__body { padding-block-start: var(--s-3); }
+
+  .card__title {
+    font-size: var(--t-base);
+    font-weight: 400;
+    letter-spacing: var(--ls-normal);
+    margin-bottom: var(--s-1);
+  }
+  .card__link:hover .card__title { text-decoration: underline; text-underline-offset: 0.18em; }
+</style>

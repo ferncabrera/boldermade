@@ -1,0 +1,155 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { breadcrumbLd } from '../lib/seo.ts';
+
+const jsonLd = [breadcrumbLd([{ name: 'Home', path: '/' }, { name: 'Customs', path: '/custom-work' }])];
+---
+
+<BaseLayout
+  title="Customs"
+  description="Commission a one-of-a-kind ring. Tell me what you have in mind — metal, stone, size and design — and I'll come back with an approximate quote. Handmade in Toronto."
+  path="/custom-work"
+  jsonLd={jsonLd}
+>
+  <div class="container section">
+    <div class="page">
+      <p class="eyebrow">commissions</p>
+      <h1>psst…your dream custom awaits</h1>
+
+      <p class="lede">
+        Tell me what you’re imagining and I’ll come back with an approximate quote. I don’t accept
+        every request, but I’m always open to discussing and revising concepts.
+      </p>
+
+      <div class="notes">
+        <h2>Before you send</h2>
+        <ul>
+          <li>Cost depends on the metal, the ring size and the design.</li>
+          <li>Pricing also moves with the current market price of the metal.</li>
+          <li>Solid gold and gold plating are both options alongside silver.</li>
+          <li>I don’t offer repairs or rework of existing pieces.</li>
+        </ul>
+      </div>
+
+      <form class="form" data-custom-form novalidate>
+        <div class="form__row">
+          <label for="name">Your name</label>
+          <input id="name" name="name" type="text" autocomplete="name" required />
+        </div>
+
+        <div class="form__row">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required />
+        </div>
+
+        <div class="form__row">
+          <label for="size">Ring size <span class="form__opt">(if you know it)</span></label>
+          <input id="size" name="size" type="text" />
+        </div>
+
+        <div class="form__row">
+          <label for="metal">Preferred metal <span class="form__opt">(optional)</span></label>
+          <select id="metal" name="metal">
+            <option value="">No preference</option>
+            <option>Sterling silver</option>
+            <option>Gold plated</option>
+            <option>Solid gold</option>
+          </select>
+        </div>
+
+        <div class="form__row">
+          <label for="idea">What are you imagining?</label>
+          <textarea id="idea" name="idea" rows="6" required
+            placeholder="Shape, stones, references, anything you've seen that you love…"></textarea>
+        </div>
+
+        <!-- Honeypot: bots fill this, humans never see it. -->
+        <div class="form__hp" aria-hidden="true">
+          <label for="company">Company</label>
+          <input id="company" name="company" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--lg">Send request</button>
+        <p class="form__msg" data-form-msg hidden role="status"></p>
+      </form>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page { max-width: var(--w-prose); }
+  .page h1 { margin-block: var(--s-2) var(--s-4); }
+
+  .notes {
+    margin-block: var(--s-6);
+    padding: var(--s-5);
+    background: var(--c-bg-raised);
+    border-radius: var(--r-md);
+  }
+  .notes h2 { font-size: var(--t-md); margin-bottom: var(--s-3); }
+  .notes ul { margin: 0; padding-left: var(--s-5); font-size: var(--t-sm); }
+  .notes li + li { margin-top: var(--s-2); }
+
+  .form { display: grid; gap: var(--s-4); margin-top: var(--s-6); }
+  .form__row { display: grid; gap: var(--s-2); }
+  .form__row label { font-size: var(--t-sm); color: var(--c-text-strong); }
+  .form__opt { color: var(--c-text-muted); }
+  .form input, .form select, .form textarea {
+    width: 100%;
+    padding: var(--s-3) var(--s-4);
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--r-md);
+    background: var(--c-bg);
+    font-size: var(--t-base);
+  }
+  .form textarea { resize: vertical; }
+  .form__hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .form button { justify-self: start; }
+  .form__msg { margin: 0; font-size: var(--t-sm); }
+  .form__msg[data-tone='ok'] { color: var(--c-text-strong); }
+  .form__msg[data-tone='err'] { color: var(--c-sale); }
+</style>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-custom-form]');
+  const msg = document.querySelector<HTMLElement>('[data-form-msg]');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+
+    const btn = form.querySelector('button[type=submit]') as HTMLButtonElement;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    try {
+      const payload = Object.fromEntries(new FormData(form).entries());
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Could not send your request.');
+
+      form.reset();
+      if (msg) {
+        msg.textContent = 'Thank you — your request is on its way. I’ll be in touch by email.';
+        msg.dataset.tone = 'ok';
+        msg.hidden = false;
+      }
+    } catch (err) {
+      if (msg) {
+        msg.textContent =
+          err instanceof Error
+            ? `${err.message} You can also email boldermade@gmail.com directly.`
+            : 'Something went wrong.';
+        msg.dataset.tone = 'err';
+        msg.hidden = false;
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send request';
+    }
+  });
+</script>

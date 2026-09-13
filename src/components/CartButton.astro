@@ -1,0 +1,52 @@
+---
+---
+<button type="button" class="cart-btn" data-cart-open aria-haspopup="dialog">
+  <span>Cart</span>
+  <span class="cart-btn__count" data-cart-count aria-hidden="true">0</span>
+  <span class="visually-hidden" data-cart-label>0 items in cart</span>
+</button>
+
+<style>
+  .cart-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    background: none;
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--r-full);
+    padding: var(--s-2) var(--s-4);
+    font-size: var(--t-sm);
+    letter-spacing: var(--ls-wide);
+    text-transform: lowercase;
+    color: var(--c-text-strong);
+    transition: background var(--d-fast) var(--e-out), color var(--d-fast) var(--e-out);
+  }
+  .cart-btn:hover { background: var(--c-action-bg); color: var(--c-action-fg); border-color: var(--c-action-bg); }
+
+  .cart-btn__count {
+    min-width: 1.35em;
+    padding: 0 0.3em;
+    border-radius: var(--r-full);
+    background: var(--c-bg-sunken);
+    color: var(--c-text-strong);
+    font-size: var(--t-xs);
+    text-align: center;
+  }
+  .cart-btn:hover .cart-btn__count { background: color-mix(in srgb, var(--c-action-fg) 25%, transparent); color: inherit; }
+</style>
+
+<script>
+  import { $cart, $cartOpen, cartCount } from '../lib/cart.ts';
+
+  document.querySelectorAll('[data-cart-open]').forEach((el) =>
+    el.addEventListener('click', () => $cartOpen.set(true))
+  );
+
+  $cart.subscribe((lines) => {
+    const n = cartCount(lines);
+    document.querySelectorAll('[data-cart-count]').forEach((el) => (el.textContent = String(n)));
+    document.querySelectorAll('[data-cart-label]').forEach(
+      (el) => (el.textContent = `${n} ${n === 1 ? 'item' : 'items'} in cart`)
+    );
+  });
+</script>

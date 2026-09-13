@@ -1,0 +1,27 @@
+name = "boldermade"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+main = "dist/_worker.js/index.js"
+
+[assets]
+directory = "dist"
+binding = "ASSETS"
+
+# Product photography. Originals live here; /img/* resizes on demand.
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "boldermade-images"
+
+# Runtime sold-out guard for finite-stock variants (see MIGRATION_PLAN §7.4).
+# Best-effort only: KV is eventually consistent.
+[[kv_namespaces]]
+binding = "SOLD"
+id = "PLACEHOLDER_CREATE_WITH_WRANGLER_KV_NAMESPACE_CREATE"
+
+[vars]
+PUBLIC_SITE_URL = "https://www.boldermade.ca"
+PUBLIC_CURRENCY = "cad"
+
+# Secrets (set via `wrangler secret put`, never committed):
+#   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY,
+#   KEYSTATIC_SECRET, KEYSTATIC_GITHUB_CLIENT_ID, KEYSTATIC_GITHUB_CLIENT_SECRET

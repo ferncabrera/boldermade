@@ -1,0 +1,88 @@
+---
+import type { Product } from '../lib/catalog.ts';
+import { formatPriceShort } from '../lib/money.ts';
+
+interface Props { product: Product }
+const { product } = Astro.props;
+
+const needsSize = product.sizing === 'variants' && product.variants.length > 1;
+const priceVaries = new Set(product.variants.map((v) => v.effectivePrice)).size > 1;
+const selectable = product.variants.filter((v) => !v.soldOut);
+---
+
+<div class="atc" data-add-to-cart data-slug={product.slug}>
+  {needsSize && (
+    <div class="atc__field">
+      <label class="atc__label" for={`size-${product.slug}`}>
+        Ring size
+        {priceVaries && <span class="atc__hint">price varies by size</span>}
+      </label>
+      <select class="atc__select" id={`size-${product.slug}`} data-size-select required>
+        <option value="" disabled selected>Choose a size</option>
+        {selectable.map((v) => (
+          <option value={v.size} data-price={v.effectivePrice}>
+            {v.size}{priceVaries ? ` — ${formatPriceShort(v.effectivePrice)}` : ''}
+          </option>
+        ))}
+      </select>
+    </div>
+  )}
+
+  {product.soldOut ? (
+    <button type="button" class="btn btn--outline btn--block btn--lg" disabled>Sold</button>
+  ) : (
+    <button type="button" class="btn btn--primary btn--block btn--lg" data-add-btn>
+      Add to cart
+    </button>
+  )}
+
+  <p class="atc__msg" data-atc-msg hidden role="status"></p>
+</div>
+
+<style>
+  .atc { display: grid; gap: var(--s-4); }
+  .atc__field { display: grid; gap: var(--s-2); }
+  .atc__label {
+    display: flex; align-items: baseline; gap: var(--s-3);
+    font-size: var(--t-sm); color: var(--c-text-strong);
+  }
+  .atc__hint {
+    font-size: var(--t-xs); color: var(--c-text-muted);
+    text-transform: uppercase; letter-spacing: var(--ls-wide);
+  }
+  .atc__select {
+    width: 100%;
+    padding: var(--s-3) var(--s-4);
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--r-md);
+    background: var(--c-bg);
+    font-size: var(--t-base);
+  }
+  .atc__msg { margin: 0; font-size: var(--t-sm); color: var(--c-text-muted); }
+</style>
+
+<script>
+  import { addToCart, $cartOpen } from '../lib/cart.ts';
+
+  document.querySelectorAll<HTMLElement>('[data-add-to-cart]').forEach((root) => {
+    const slug = root.dataset.slug!;
+    const select = root.querySelector<HTMLSelectElement>('[data-size-select]');
+    const btn = root.querySelector<HTMLButtonElement>('[data-add-btn]');
+    const msg = root.querySelector<HTMLElement>('[data-atc-msg]');
+
+    btn?.addEventListener('click', () => {
+      if (select && !select.value) {
+        select.focus();
+        if (msg) { msg.textContent = 'Please choose a ring size.'; msg.hidden = false; }
+        return;
+      }
+      addToCart(slug, select?.value ?? '');
+      if (msg) msg.hidden = true;
+      $cartOpen.set(true);
+    });
+
+    select?.addEventListener('change', () => {
+      if (msg) msg.hidden = true;
+    });
+  });
+</script>

@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Thank you"
+  description="Your bolder order is confirmed."
+  path="/checkout/success"
+  noindex
+>
+  <div class="container section">
+    <div class="page">
+      <p class="eyebrow">order confirmed</p>
+      <h1>Thank you</h1>
+      <p class="lede">
+        Your order is in and Stripe has emailed your receipt. I’ll be in touch when your ring ships —
+        made-to-order pieces usually take 3–4 weeks.
+      </p>
+      <a class="btn btn--outline btn--lg" href="/shop">Back to the shop</a>
+    </div>
+  </div>
+</BaseLayout>
+<script>
+  import { clearCart } from '../../lib/cart.ts';
+  clearCart();
+</script>
+<style>
+  .page { max-width: var(--w-prose); }
+  .page h1 { margin-block: var(--s-2) var(--s-4); }
+  .page .btn { margin-top: var(--s-5); }
+</style>

@@ -1,0 +1,110 @@
+---
+const year = new Date().getFullYear();
+const links = [
+  { href: '/shop', label: 'Shop' },
+  { href: '/custom-work', label: 'Custom work' },
+  { href: '/about', label: 'FAQ + About' },
+  { href: '/sizing', label: 'Ring sizing' },
+  { href: '/contact', label: 'Contact' },
+];
+const policies = [
+  { href: '/policies/shipping', label: 'Shipping' },
+  { href: '/policies/returns', label: 'Returns' },
+  { href: '/policies/privacy', label: 'Privacy' },
+];
+---
+
+<footer class="footer">
+  <div class="container container--wide footer__inner">
+    <div class="footer__brand">
+      <p class="footer__wordmark">bolder</p>
+      <p class="footer__note">
+        Handmade statement rings, designed and cast by hand in Toronto, Canada.
+      </p>
+      <a class="footer__ig" href="https://www.instagram.com/boldermade/" rel="me noopener" target="_blank">
+        Instagram
+      </a>
+    </div>
+
+    <nav class="footer__col" aria-label="Footer">
+      <h2 class="eyebrow">Explore</h2>
+      <ul class="footer__list">
+        {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <nav class="footer__col" aria-label="Policies">
+      <h2 class="eyebrow">Policies</h2>
+      <ul class="footer__list">
+        {policies.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+  </div>
+
+  <div class="container container--wide footer__base">
+    <p>&copy; {year} bolder</p>
+    <p>Prices in CAD</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-top: var(--s-section);
+    border-top: 1px solid var(--c-border);
+    background: var(--c-bg-raised);
+  }
+
+  .footer__inner {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: var(--s-6);
+    padding-block: var(--s-7);
+  }
+
+  .footer__wordmark {
+    font-family: var(--font-display);
+    font-size: var(--t-lg);
+    color: var(--c-text-strong);
+    margin-bottom: var(--s-2);
+  }
+
+  .footer__note {
+    max-width: 34ch;
+    font-size: var(--t-sm);
+    color: var(--c-text-muted);
+  }
+
+  .footer__ig {
+    display: inline-block;
+    margin-top: var(--s-3);
+    font-size: var(--t-sm);
+    text-decoration: underline;
+  }
+
+  .footer__col h2 { margin-bottom: var(--s-3); }
+
+  .footer__list { list-style: none; padding: 0; margin: 0; }
+  .footer__list li + li { margin-top: var(--s-2); }
+  .footer__list a {
+    font-size: var(--t-sm);
+    text-decoration: none;
+    color: var(--c-text-muted);
+  }
+  .footer__list a:hover { color: var(--c-text-strong); text-decoration: underline; }
+
+  .footer__base {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--s-4);
+    padding-block: var(--s-4);
+    border-top: 1px solid var(--c-border);
+    font-size: var(--t-xs);
+    color: var(--c-text-muted);
+  }
+  .footer__base p { margin: 0; }
+
+  @media (max-width: 48rem) {
+    .footer__inner { grid-template-columns: 1fr 1fr; }
+    .footer__brand { grid-column: 1 / -1; }
+  }
+</style>

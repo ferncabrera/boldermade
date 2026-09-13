@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Cart" description="Your bolder cart." path="/cart" noindex>
+  <div class="container section">
+    <div class="page">
+      <h1>Your cart</h1>
+      <p>Your cart opens in a panel on every page.</p>
+      <button type="button" class="btn btn--primary btn--lg" data-cart-open>Open cart</button>
+      <p class="alt"><a href="/shop">Continue shopping</a></p>
+    </div>
+  </div>
+</BaseLayout>
+<style>
+  .page { max-width: var(--w-prose); }
+  .page h1 { margin-bottom: var(--s-4); }
+  .alt { margin-top: var(--s-5); }
+  .alt a { text-decoration: underline; }
+</style>

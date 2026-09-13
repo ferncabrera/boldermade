@@ -1,0 +1,163 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Gallery from '../../../components/Gallery.astro';
+import AddToCart from '../../../components/AddToCart.astro';
+import Price from '../../../components/Price.astro';
+import Badge from '../../../components/Badge.astro';
+import ProductGrid from '../../../components/ProductGrid.astro';
+import { getPublishedProducts, type Product } from '../../../lib/catalog.ts';
+import { breadcrumbLd, productLd, canonical } from '../../../lib/seo.ts';
+import { imgUrl } from '../../../lib/images.ts';
+
+export async function getStaticPaths() {
+  const products = await getPublishedProducts();
+  return products.map((product) => ({
+    params: { slug: product.slug },
+    props: { product, all: products },
+  }));
+}
+
+interface Props { product: Product; all: Product[] }
+const { product, all } = Astro.props;
+
+const cheapest = product.variants.reduce(
+  (best, v) => (v.effectivePrice < best.effectivePrice ? v : best),
+  product.variants[0]!
+);
+const priceVaries = new Set(product.variants.map((v) => v.effectivePrice)).size > 1;
+const related = all.filter((p) => p.slug !== product.slug && !p.soldOut).slice(0, 4);
+
+const ogImage = product.images[0] ? canonical(imgUrl(product.images[0].key, { width: 1200 })) : undefined;
+
+const jsonLd = [
+  breadcrumbLd([
+    { name: 'Home', path: '/' },
+    { name: 'Shop', path: '/shop' },
+    { name: product.displayTitle, path: `/shop/p/${product.slug}` },
+  ]),
+  productLd(product, product.images.map((i) => canonical(imgUrl(i.key, { width: 1200 })))),
+];
+
+const sizeLabel =
+  product.sizing === 'fixed' && product.fixedSize
+    ? `Size ${product.fixedSize}`
+    : product.sizing === 'adjustable' && product.sizeRange
+      ? `Adjustable ${product.sizeRange}`
+      : null;
+---
+
+<BaseLayout
+  title={product.seoTitle}
+  description={product.seoDescription}
+  path={`/shop/p/${product.slug}`}
+  image={ogImage}
+  imageAlt={product.images[0]?.alt}
+  type="product"
+  jsonLd={jsonLd}
+  wide
+>
+  <div class="container container--wide section">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href="/shop">Shop</a> <span aria-hidden="true">/</span> <span>{product.displayTitle}</span>
+    </nav>
+
+    <div class="pdp">
+      <div class="pdp__media">
+        <Gallery images={product.images} title={product.displayTitle} />
+      </div>
+
+      <div class="pdp__info">
+        <div class="pdp__flags">
+          {product.soldOut && <Badge tone="sold">Sold</Badge>}
+          {product.madeToOrder && <Badge tone="made">Made to order</Badge>}
+          {product.oneOfAKind && !product.soldOut && <Badge tone="neutral">One of a kind</Badge>}
+        </div>
+
+        <h1 class="pdp__title">{product.displayTitle}</h1>
+
+        <Price
+          price={cheapest.price}
+          salePrice={cheapest.onSale ? cheapest.salePrice : undefined}
+          from={priceVaries}
+          size="lg"
+        />
+
+        {sizeLabel && <p class="pdp__size">{sizeLabel}</p>}
+
+        {product.descriptionHtml && (
+          <div class="prose pdp__desc" set:html={product.descriptionHtml} />
+        )}
+
+        <AddToCart product={product} />
+
+        <dl class="pdp__meta">
+          {product.leadTime && (
+            <div><dt>Lead time</dt><dd>{product.leadTime}</dd></div>
+          )}
+          {product.stone && <div><dt>Stone</dt><dd>{product.stone}</dd></div>}
+          {product.materials.length > 0 && (
+            <div><dt>Materials</dt><dd>{product.materials.join(', ')}</dd></div>
+          )}
+          <div><dt>Shipping</dt><dd>Worldwide. Calculated at checkout.</dd></div>
+        </dl>
+
+        {product.careHtml && (
+          <details class="pdp__care">
+            <summary>Care</summary>
+            <div class="prose" set:html={product.careHtml} />
+          </details>
+        )}
+      </div>
+    </div>
+
+    {related.length > 0 && (
+      <section class="related">
+        <h2 class="related__title">More from bolder</h2>
+        <ProductGrid products={related} eagerCount={0} />
+      </section>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .crumbs { font-size: var(--t-sm); color: var(--c-text-muted); margin-bottom: var(--s-5); }
+  .crumbs a { text-decoration: none; }
+  .crumbs a:hover { text-decoration: underline; }
+  .crumbs span { margin-inline: var(--s-1); }
+
+  .pdp {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: var(--s-7);
+    align-items: start;
+  }
+
+  .pdp__info { display: grid; gap: var(--s-4); position: sticky; top: 5.5rem; }
+  .pdp__flags { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .pdp__title { font-size: var(--t-xl); }
+  .pdp__size { margin: 0; color: var(--c-text-muted); font-size: var(--t-sm); }
+  .pdp__desc { margin-block: var(--s-2); }
+
+  .pdp__meta {
+    margin: 0;
+    display: grid;
+    gap: var(--s-3);
+    border-top: 1px solid var(--c-border);
+    padding-top: var(--s-4);
+    font-size: var(--t-sm);
+  }
+  .pdp__meta > div { display: grid; grid-template-columns: 8rem 1fr; gap: var(--s-3); }
+  .pdp__meta dt { color: var(--c-text-muted); }
+  .pdp__meta dd { margin: 0; }
+
+  .pdp__care summary { cursor: pointer; font-size: var(--t-sm); color: var(--c-text-strong); }
+  .pdp__care[open] summary { margin-bottom: var(--s-3); }
+
+  .related { margin-top: var(--s-9); border-top: 1px solid var(--c-border); padding-top: var(--s-6); }
+  .related__title { margin-bottom: var(--s-5); font-size: var(--t-lg); }
+
+  @media (max-width: 56rem) {
+    .pdp { grid-template-columns: 1fr; gap: var(--s-6); }
+    .pdp__info { position: static; }
+  }
+</style>

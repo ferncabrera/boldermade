@@ -1,0 +1,117 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { breadcrumbLd } from '../lib/seo.ts';
+
+/* Copy ported verbatim from the Squarespace /about page (which the nav labels
+   "FAQ"). Wording is Samantha's and must not be paraphrased. */
+const faqs = [
+  {
+    q: 'Do you only use silver?',
+    a: 'Nope! Every ring that I design is taken to a professional casting studio that works in a variety of metals. Solid gold or gold plated are also options.',
+  },
+  {
+    q: 'Do you do custom work?',
+    a: 'Yes! There is a form under “Customs” that you can fill out to request a custom piece made by me. I do not accept all requests, although I am always open to discussing and revising concepts.',
+  },
+  {
+    q: 'How much is a custom ring?',
+    a: 'There are many factors that influence the cost of a custom ring. Material used, ring size and the design. I will provide you with an approximate quote when you submit a custom request form. Price is also dependant on the current market price of the metal being used.',
+  },
+  {
+    q: 'How do you make your rings?',
+    a: 'I use a method called “lost wax casting”. I create my designs either from scratch using a hard wax or from hard wax tubes. The wax is then filed, melted, carved etc. before it’s taken to be professionally cast. Once I have my designs back in metal, that’s when the real magic happens! Aka, I sand, polish and/or set any gemstones.',
+  },
+  {
+    q: 'Do you ship worldwide?',
+    a: 'Yes! If your residence is outside of the listed options I ship to, please let me know and I will add it to the list.',
+  },
+  {
+    q: 'Do you offer repairs or transform old treasures?',
+    a: 'Unfortunately, I do not offer repairs. Bolder is all about making a statement and that means focusing on doing what gives me the most creative freedom – which is currently making as many funky pieces as possible.',
+  },
+  {
+    q: 'What’s the lost ring series?',
+    a: 'In late February 2026, I found a poster just outside of my neighbourhood for a lost silver ring, hand-drawn rather than described. It belonged to someone named Debbie, a gift from her aunt and the only thing of her aunt’s she had, lost in the snow in January and never found. I texted the number and asked whether she’d want a replacement, having already made a rough interpretation in wax. Working together from the poster sketch and photos she sent me, I made it as close to the original as I could — a brushed silver horseshoe with a round cubic zirconia, on a mirror-finish band. The 3 videos follow it from our first meeting to handing it over in March.',
+  },
+];
+
+const jsonLd = [
+  breadcrumbLd([{ name: 'Home', path: '/' }, { name: 'FAQ + About', path: '/about' }]),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
+---
+
+<BaseLayout
+  title="FAQ + About"
+  description="Learn about bolder, customization options, and the artist's design philosophy. Women-owned small business, crafted in Toronto, Canada."
+  path="/about"
+  jsonLd={jsonLd}
+>
+  <div class="container section">
+    <div class="page">
+      <h1>FAQs</h1>
+
+      <dl class="faq">
+        {faqs.map((f) => (
+          <div class="faq__item">
+            <dt class="faq__q">{f.q}</dt>
+            <dd class="faq__a">{f.a}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <section class="bio">
+        <h2>about bolder</h2>
+        <p>
+          bolder came to be when I seriously stopped and asked myself what I would do to make
+          money if I could do what would make me happiest; which I acknowledge with great
+          privilege. I am completely self taught using the wax method, and do not consider
+          myself a silversmith or traditional jeweller, but rather a jewelry designer and
+          ‘maker’ (as the wonderful maker, Tim, puts it). I’ve always adored jewelry and working
+          with my hands in creative ways, but my first experience making jewelry from scratch and
+          beginning to learn what it’s all about was in a workshop by Tim in Emerald Beach, NSW –
+          Australia. The name bolder is inspired by the ‘boulder’ opal, which is my favourite
+          gemstone. I enjoy that it has a double meaning maybe not to everyone who comes across
+          the name, but to myself.
+        </p>
+      </section>
+
+      <section class="reach">
+        <h2>reach me?</h2>
+        <p>
+          Questions about anything else? Don’t hesitate —
+          <a href="/contact">send me a message</a> or find me on
+          <a href="https://www.instagram.com/boldermade/" rel="noopener" target="_blank">Instagram</a>.
+        </p>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page { max-width: var(--w-prose); }
+  .page h1 { margin-bottom: var(--s-6); }
+
+  .faq { margin: 0; }
+  .faq__item { border-top: 1px solid var(--c-border); padding-block: var(--s-5); }
+  .faq__item:last-child { border-bottom: 1px solid var(--c-border); }
+  .faq__q {
+    font-family: var(--font-display);
+    font-size: var(--t-md);
+    color: var(--c-text-strong);
+    margin-bottom: var(--s-2);
+  }
+  .faq__a { margin: 0; color: var(--c-text); }
+
+  .bio, .reach { margin-top: var(--s-7); }
+  .bio h2, .reach h2 { margin-bottom: var(--s-4); }
+  .reach a { text-decoration: underline; }
+</style>

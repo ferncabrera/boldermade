@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Contact"
+  description="Get in touch with bolder about a custom ring, an order, or anything else. Handmade statement rings from Toronto, Canada."
+  path="/contact"
+>
+  <div class="container section">
+    <div class="page">
+      <h1>Reach me</h1>
+      <p class="lede">
+        Questions about a piece, an order, or something you’re imagining? I read everything.
+      </p>
+      <ul class="ways">
+        <li><strong>Custom rings</strong> — start with the <a href="/custom-work">custom request form</a>, it asks the right questions.</li>
+        <li><strong>Email</strong> — <a href="mailto:boldermade@gmail.com">boldermade@gmail.com</a></li>
+        <li><strong>Instagram</strong> — <a href="https://www.instagram.com/boldermade/" rel="noopener" target="_blank">@boldermade</a>, usually the fastest.</li>
+      </ul>
+    </div>
+  </div>
+</BaseLayout>
+<style>
+  .page { max-width: var(--w-prose); }
+  .page h1 { margin-bottom: var(--s-4); }
+  .ways { list-style: none; padding: 0; margin-top: var(--s-6); }
+  .ways li { border-top: 1px solid var(--c-border); padding-block: var(--s-4); }
+  .ways a { text-decoration: underline; }
+</style>

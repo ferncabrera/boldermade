@@ -1,0 +1,54 @@
+---
+import { formatPriceShort } from '../lib/money.ts';
+
+interface Props {
+  price: number;
+  salePrice?: number | undefined;
+  from?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const { price, salePrice, from = false, size = 'md' } = Astro.props;
+const onSale = typeof salePrice === 'number' && salePrice > 0 && salePrice < price;
+---
+
+<p class:list={['price', `price--${size}`]}>
+  {from && <span class="price__from">from</span>}
+  {onSale ? (
+    <>
+      <span class="price__was"><span class="visually-hidden">Was </span>{formatPriceShort(price)}</span>
+      <span class="price__now"><span class="visually-hidden">Now </span>{formatPriceShort(salePrice!)}</span>
+    </>
+  ) : (
+    <span class="price__now">{formatPriceShort(price)}</span>
+  )}
+</p>
+
+<style>
+  .price {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-2);
+    margin: 0;
+    font-family: var(--font-display);
+    color: var(--c-text-strong);
+  }
+  .price--sm { font-size: var(--t-sm); }
+  .price--md { font-size: var(--t-base); }
+  .price--lg { font-size: var(--t-lg); }
+
+  .price__from {
+    font-family: var(--font-body);
+    font-size: var(--t-xs);
+    color: var(--c-text-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--ls-wide);
+  }
+  .price__was {
+    color: var(--c-text-muted);
+    text-decoration: line-through;
+    font-size: 0.85em;
+  }
+  .price__now { color: var(--c-text-strong); }
+  .price__was + .price__now { color: var(--c-sale); }
+</style>

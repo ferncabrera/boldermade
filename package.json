@@ -1,0 +1,33 @@
+{
+  "name": "boldermade",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "wrangler dev",
+    "deploy": "npm run preflight && astro build && wrangler deploy",
+    "check": "astro check",
+    "typecheck": "tsc --noEmit",
+    "import:products": "node --experimental-strip-types scripts/import-products.ts",
+    "verify:redirects": "node --experimental-strip-types scripts/verify-redirects.ts",
+    "audit:alt": "node --experimental-strip-types scripts/audit-alt.ts",
+    "preflight": "node --experimental-strip-types scripts/preflight.ts"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.6.10",
+    "@astrojs/sitemap": "^3.6.0",
+    "@keystatic/astro": "^5.0.6",
+    "@keystatic/core": "^0.5.47",
+    "astro": "^5.14.1",
+    "nanostores": "^0.11.4",
+    "stripe": "^18.5.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^22.18.1",
+    "typescript": "^5.9.2",
+    "wrangler": "^4.40.0"
+  }
+}

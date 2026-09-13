@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Returns"
+  description="Returns and exchanges on handmade bolder rings, including one-of-a-kind and made-to-order pieces."
+  path="/policies/returns"
+>
+  <div class="container section">
+    <div class="page prose">
+      <h1>Returns</h1>
+
+      <p class="draft-warning">
+        <strong>Draft:</strong> wording needs Samantha’s sign-off before publishing
+        (MIGRATION_PLAN §14 Q12). Stripe requires a published returns policy.
+      </p>
+
+      <p class="lede">
+        Every piece is made by hand, so small variations in texture, finish and stone are part of
+        the work rather than faults. Anything described as imperfect on the listing is noted
+        deliberately.
+      </p>
+
+      <h2>One-of-a-kind pieces</h2>
+      <p>
+        If something isn’t right, contact me within 14 days of delivery and we’ll sort it out.
+        Pieces must be unworn and in their original condition.
+      </p>
+
+      <h2>Made-to-order pieces</h2>
+      <p>
+        Made-to-order rings are cast for you specifically and can’t be restocked, so they’re final
+        sale unless the piece arrives damaged or differs from its description.
+      </p>
+
+      <h2>Custom commissions</h2>
+      <p>
+        Commissions are non-refundable once casting has begun. We’ll agree the design together
+        before anything is made.
+      </p>
+
+      <h2>Damage in transit</h2>
+      <p>
+        If a ring arrives damaged, email <a href="mailto:boldermade@gmail.com">boldermade@gmail.com</a>
+        with photos within 7 days and I’ll make it right.
+      </p>
+
+      <h2>Repairs</h2>
+      <p>I don’t offer repairs or rework of existing pieces.</p>
+    </div>
+  </div>
+</BaseLayout>
+<style>
+  .page { max-width: var(--w-prose); }
+  .page h1 { margin-bottom: var(--s-4); }
+  .draft-warning { padding: var(--s-4); border: 1px solid var(--c-sale); border-radius: var(--r-md); color: var(--c-sale); font-size: var(--t-sm); }
+</style>

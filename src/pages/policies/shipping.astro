@@ -1,0 +1,69 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { ZONES, PLACEHOLDER_RATES } from '../../lib/shipping.ts';
+import { formatPriceShort } from '../../lib/money.ts';
+---
+<BaseLayout
+  title="Shipping"
+  description="Where bolder ships, what it costs, and how long handmade and made-to-order rings take to reach you."
+  path="/policies/shipping"
+>
+  <div class="container section">
+    <div class="page prose">
+      <h1>Shipping</h1>
+
+      {PLACEHOLDER_RATES && (
+        <p class="draft-warning">
+          <strong>Draft:</strong> these rates are placeholders pending the real figures from
+          Squarespace. Do not publish this page as-is.
+        </p>
+      )}
+
+      <p class="lede">
+        bolder ships worldwide from Toronto, Canada. If your country isn’t listed,
+        <a href="/contact">get in touch</a> — I’ll add it.
+      </p>
+
+      <table class="chart">
+        <thead>
+          <tr><th scope="col">Destination</th><th scope="col">Cost</th><th scope="col">Estimate</th></tr>
+        </thead>
+        <tbody>
+          {ZONES.map((z) => (
+            <tr>
+              <td>{z.label}</td>
+              <td>{formatPriceShort(z.rate)}</td>
+              <td>{z.minDays}–{z.maxDays} business days</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2>Made-to-order pieces</h2>
+      <p>
+        Made-to-order rings are cast and finished after you order, which takes roughly 3–4 weeks
+        before shipping. One-of-a-kind pieces that are in stock ship within a few days.
+      </p>
+
+      <h2>Customs and duties</h2>
+      <p>
+        International orders may attract import duties or taxes on arrival. These are set by your
+        country and are the recipient’s responsibility.
+      </p>
+    </div>
+  </div>
+</BaseLayout>
+<style>
+  .page { max-width: var(--w-prose); }
+  .page h1 { margin-bottom: var(--s-4); }
+  .draft-warning {
+    padding: var(--s-4);
+    border: 1px solid var(--c-sale);
+    border-radius: var(--r-md);
+    color: var(--c-sale);
+    font-size: var(--t-sm);
+  }
+  .chart { width: 100%; border-collapse: collapse; margin-block: var(--s-5); font-size: var(--t-sm); }
+  .chart th, .chart td { text-align: left; padding: var(--s-3) var(--s-2); border-bottom: 1px solid var(--c-border); }
+  .chart thead th { color: var(--c-text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: var(--ls-wide); font-size: var(--t-xs); }
+</style>

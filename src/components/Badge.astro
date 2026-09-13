@@ -1,0 +1,23 @@
+---
+interface Props { tone?: 'neutral' | 'sold' | 'sale' | 'made'; }
+const { tone = 'neutral' } = Astro.props;
+---
+<span class:list={['badge', `badge--${tone}`]}><slot /></span>
+
+<style>
+  .badge {
+    display: inline-block;
+    padding: 0.25em 0.7em;
+    border-radius: var(--r-full);
+    font-size: var(--t-xs);
+    font-weight: 500;
+    letter-spacing: var(--ls-wide);
+    text-transform: uppercase;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+  .badge--neutral { background: var(--c-bg-sunken); color: var(--c-text-muted); }
+  .badge--sold    { background: var(--c-ink-900); color: var(--c-ink-000); }
+  .badge--sale    { background: var(--c-sale); color: var(--c-ink-000); }
+  .badge--made    { background: transparent; color: var(--c-text-muted); border: 1px solid var(--c-border-strong); }
+</style>

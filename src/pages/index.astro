@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProductGrid from '../components/ProductGrid.astro';
+import { getPublishedProducts } from '../lib/catalog.ts';
+
+const products = await getPublishedProducts();
+const featured = products.filter((p) => !p.soldOut).slice(0, 8);
+---
+
+<BaseLayout
+  title="bolder"
+  description="Handmade statement rings, designed and cast by hand in Toronto. One-of-a-kind pieces with opals, fossilised shark teeth and raw sapphires, plus made-to-order."
+  path="/"
+  wide
+>
+  <section class="hero">
+    <div class="container container--wide">
+      <p class="eyebrow">handmade in Toronto</p>
+      <h1 class="hero__title">everything bolder is handmade to make a statement.</h1>
+      <div class="hero__actions">
+        <a class="btn btn--primary btn--lg" href="/shop">Shop rings</a>
+        <a class="btn btn--outline btn--lg" href="/custom-work">Commission a custom piece</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section container container--wide">
+    <header class="section__head">
+      <h2>shop bolder</h2>
+      <a class="section__more" href="/shop">View all</a>
+    </header>
+    <ProductGrid products={featured} />
+  </section>
+
+  <section class="section container container--wide">
+    <div class="pitch">
+      <h2 class="pitch__title">lost wax casting, start to finish</h2>
+      <p class="pitch__body">
+        Every design begins as hard wax — carved, filed and melted by hand before it goes to
+        the casting studio. What comes back is sanded, polished and set here. No two pieces
+        leave the bench quite the same.
+      </p>
+      <a class="pitch__link" href="/about">Read more about bolder</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding-block: clamp(3rem, 2rem + 8vw, 9rem);
+    border-bottom: 1px solid var(--c-border);
+  }
+  .hero__title {
+    font-size: var(--t-3xl);
+    max-width: 18ch;
+    margin-block: var(--s-4) var(--s-6);
+  }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+
+  .section__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-4);
+    margin-bottom: var(--s-5);
+  }
+  .section__more { font-size: var(--t-sm); color: var(--c-text-muted); }
+  .section__more:hover { color: var(--c-text-strong); }
+
+  .pitch {
+    border-top: 1px solid var(--c-border);
+    padding-top: var(--s-6);
+    max-width: var(--w-prose);
+  }
+  .pitch__title { margin-bottom: var(--s-4); }
+  .pitch__body { color: var(--c-text); }
+  .pitch__link { font-size: var(--t-sm); text-decoration: underline; }
+</style>

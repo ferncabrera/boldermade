@@ -1,0 +1,256 @@
+---
+import { getPublishedProducts } from '../lib/catalog.ts';
+
+/* The drawer needs names, prices and image keys for whatever is in the cart.
+   The cart itself stores only {slug,size,qty}, so we ship a small lookup table
+   — it is display data, and the checkout Worker still resolves real prices
+   server-side. */
+const products = await getPublishedProducts();
+const lookup = Object.fromEntries(
+  products.map((p) => [
+    p.slug,
+    {
+      title: p.displayTitle,
+      image: p.images[0]?.key ?? '',
+      alt: p.images[0]?.alt ?? '',
+      variants: Object.fromEntries(p.variants.map((v) => [v.size, v.effectivePrice])),
+    },
+  ])
+);
+---
+
+<div class="drawer" data-cart-drawer hidden>
+  <div class="drawer__scrim" data-cart-close></div>
+
+  <aside class="drawer__panel" role="dialog" aria-modal="true" aria-label="Shopping cart">
+    <header class="drawer__head">
+      <h2 class="drawer__title">Cart</h2>
+      <button type="button" class="drawer__close" data-cart-close aria-label="Close cart">&times;</button>
+    </header>
+
+    <div class="drawer__body" data-cart-body></div>
+
+    <footer class="drawer__foot" data-cart-foot hidden>
+      <div class="drawer__total">
+        <span>Subtotal</span>
+        <strong data-cart-total>$0</strong>
+      </div>
+      <p class="drawer__note">Shipping calculated at checkout. Prices in CAD.</p>
+      <button type="button" class="btn btn--primary btn--block" data-cart-checkout>
+        Checkout
+      </button>
+      <p class="drawer__error" data-cart-error hidden role="alert"></p>
+    </footer>
+  </aside>
+</div>
+
+<script is:inline define:vars={{ lookup }}>
+  window.__BOLDER_CATALOG__ = lookup;
+</script>
+
+<script>
+  import { $cart, $cartOpen, setQty, removeFromCart } from '../lib/cart.ts';
+
+  const drawer = document.querySelector('[data-cart-drawer]') as HTMLElement | null;
+  const body = document.querySelector('[data-cart-body]') as HTMLElement | null;
+  const foot = document.querySelector('[data-cart-foot]') as HTMLElement | null;
+  const totalEl = document.querySelector('[data-cart-total]') as HTMLElement | null;
+  const errorEl = document.querySelector('[data-cart-error]') as HTMLElement | null;
+  const checkoutBtn = document.querySelector('[data-cart-checkout]') as HTMLButtonElement | null;
+  if (!drawer || !body || !foot) throw new Error('cart drawer markup missing');
+
+  const catalog = (window as any).__BOLDER_CATALOG__ ?? {};
+  const money = (cents: number) =>
+    new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', currencyDisplay: 'narrowSymbol' })
+      .format(cents / 100)
+      .replace(/[.,]00$/, '');
+
+  let lastFocused: HTMLElement | null = null;
+
+  $cartOpen.subscribe((open) => {
+    drawer.hidden = !open;
+    document.documentElement.style.overflow = open ? 'hidden' : '';
+    if (open) {
+      lastFocused = document.activeElement as HTMLElement;
+      (drawer.querySelector('.drawer__close') as HTMLElement | null)?.focus();
+    } else {
+      lastFocused?.focus();
+    }
+  });
+
+  drawer.querySelectorAll('[data-cart-close]').forEach((el) =>
+    el.addEventListener('click', () => $cartOpen.set(false))
+  );
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !drawer.hidden) $cartOpen.set(false);
+  });
+
+  $cart.subscribe((lines) => {
+    if (!lines.length) {
+      body.innerHTML = '<p class="drawer__empty">Your cart is empty.</p>';
+      foot.hidden = true;
+      return;
+    }
+
+    let total = 0;
+    body.innerHTML = lines
+      .map((l) => {
+        const p = catalog[l.slug];
+        if (!p) return '';
+        const unit = p.variants[l.size] ?? 0;
+        total += unit * l.qty;
+        const sizeLabel = l.size ? `Size ${l.size}` : '';
+        return `
+          <div class="line" data-slug="${l.slug}" data-size="${l.size}">
+            ${p.image ? `<img class="line__img" src="/img/${p.image}?w=160&q=80&fit=cover" alt="${p.alt}" width="80" height="100" loading="lazy">` : '<div class="line__img"></div>'}
+            <div class="line__info">
+              <p class="line__title">${p.title}</p>
+              ${sizeLabel ? `<p class="line__size">${sizeLabel}</p>` : ''}
+              <p class="line__price">${money(unit)}</p>
+            </div>
+            <div class="line__qty">
+              <button type="button" data-step="-1" aria-label="Decrease quantity">−</button>
+              <span>${l.qty}</span>
+              <button type="button" data-step="1" aria-label="Increase quantity">+</button>
+              <button type="button" class="line__remove" data-remove aria-label="Remove">Remove</button>
+            </div>
+          </div>`;
+      })
+      .join('');
+
+    if (totalEl) totalEl.textContent = money(total);
+    foot.hidden = false;
+  });
+
+  body.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('button');
+    if (!btn) return;
+    const line = btn.closest('.line') as HTMLElement | null;
+    if (!line) return;
+    const slug = line.dataset.slug!;
+    const size = line.dataset.size ?? '';
+    const current = $cart.get().find((l) => l.slug === slug && l.size === size);
+    if (!current) return;
+
+    if (btn.hasAttribute('data-remove')) removeFromCart(slug, size);
+    else if (btn.dataset.step) setQty(slug, size, current.qty + Number(btn.dataset.step));
+  });
+
+  checkoutBtn?.addEventListener('click', async () => {
+    const lines = $cart.get();
+    if (!lines.length) return;
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Redirecting…';
+    if (errorEl) errorEl.hidden = true;
+
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ items: lines }),
+      });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) throw new Error(data.error || 'Checkout is unavailable right now.');
+      window.location.href = data.url;
+    } catch (err) {
+      if (errorEl) {
+        errorEl.textContent = err instanceof Error ? err.message : 'Something went wrong.';
+        errorEl.hidden = false;
+      }
+      checkoutBtn.disabled = false;
+      checkoutBtn.textContent = 'Checkout';
+    }
+  });
+</script>
+
+<style>
+  .drawer { position: fixed; inset: 0; z-index: var(--z-drawer); }
+  .drawer[hidden] { display: none; }
+
+  .drawer__scrim {
+    position: absolute;
+    inset: 0;
+    background: hsl(30 8% 4% / 0.4);
+    animation: fade var(--d-base) var(--e-out);
+  }
+
+  .drawer__panel {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    width: min(26rem, 100%);
+    background: var(--c-bg);
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+    animation: slide var(--d-base) var(--e-out);
+  }
+
+  @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes slide { from { transform: translateX(100%) } to { transform: translateX(0) } }
+
+  .drawer__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--s-4) var(--s-5);
+    border-bottom: 1px solid var(--c-border);
+  }
+  .drawer__title { font-size: var(--t-md); }
+  .drawer__close {
+    background: none;
+    border: 0;
+    font-size: 1.75rem;
+    line-height: 1;
+    color: var(--c-text-muted);
+    padding: 0 var(--s-1);
+  }
+  .drawer__close:hover { color: var(--c-text-strong); }
+
+  .drawer__body { flex: 1; overflow-y: auto; padding: var(--s-4) var(--s-5); }
+
+  .drawer__foot { padding: var(--s-4) var(--s-5); border-top: 1px solid var(--c-border); }
+  .drawer__total {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--t-md);
+    margin-bottom: var(--s-2);
+  }
+  .drawer__note { font-size: var(--t-xs); color: var(--c-text-muted); margin-bottom: var(--s-3); }
+  .drawer__error { margin-top: var(--s-3); color: var(--c-sale); font-size: var(--t-sm); }
+
+  .drawer :global(.drawer__empty) { color: var(--c-text-muted); }
+
+  .drawer :global(.line) {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    gap: var(--s-3);
+    padding-block: var(--s-4);
+    border-bottom: 1px solid var(--c-border);
+  }
+  .drawer :global(.line__img) {
+    width: 4rem; height: 5rem;
+    object-fit: cover;
+    border-radius: var(--r-sm);
+    background: var(--c-bg-sunken);
+  }
+  .drawer :global(.line__title) { margin: 0; color: var(--c-text-strong); }
+  .drawer :global(.line__size),
+  .drawer :global(.line__price) { margin: 0; font-size: var(--t-sm); color: var(--c-text-muted); }
+  .drawer :global(.line__qty) {
+    grid-column: 2;
+    display: flex; align-items: center; gap: var(--s-2);
+    margin-top: var(--s-2);
+    font-size: var(--t-sm);
+  }
+  .drawer :global(.line__qty button) {
+    background: none; border: 1px solid var(--c-border-strong);
+    border-radius: var(--r-sm); width: 1.75rem; height: 1.75rem;
+  }
+  .drawer :global(.line__remove) {
+    width: auto !important; border: 0 !important;
+    margin-inline-start: auto;
+    color: var(--c-text-muted); text-decoration: underline;
+    font-size: var(--t-xs);
+  }
+</style>
