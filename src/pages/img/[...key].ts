@@ -22,6 +22,30 @@ import type { APIRoute } from 'astro';
 const ALLOWED_WIDTHS = new Set([160, 200, 320, 480, 640, 960, 1200, 1280, 1920, 2500]);
 const IMMUTABLE = 'public, max-age=31536000, immutable';
 
+function guessType(key: string): string {
+  if (key.endsWith('.png')) return 'image/png';
+  if (key.endsWith('.webp')) return 'image/webp';
+  return 'image/jpeg';
+}
+
+/** Dev-only. Returns null in production so the branch cannot leak. */
+async function readLocalImage(key: string): Promise<ArrayBuffer | null> {
+  if (!import.meta.env.DEV) return null;
+  try {
+    const [{ readFile }, { join }, { cwd }] = await Promise.all([
+      import('node:fs/promises'),
+      import('node:path'),
+      import('node:process'),
+    ]);
+    // Contain the read to tmp-images: a traversing key must not escape it.
+    if (key.includes('..')) return null;
+    const buf = await readFile(join(cwd(), 'tmp-images', key));
+    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+  } catch {
+    return null;
+  }
+}
+
 export const GET: APIRoute = async ({ params, request, locals }) => {
   const env = (locals as any)?.runtime?.env ?? {};
   const raw = params.key ?? '';
@@ -34,7 +58,26 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
   if (raw.startsWith('raw/')) {
     const key = raw.slice(4);
     const object = await env.IMAGES.get(key);
-    if (!object) return new Response('not found', { status: 404 });
+
+    if (!object) {
+      // In `astro dev` the R2 binding is miniflare's local bucket, which is
+      // empty — the real objects live in remote R2. Rather than making every
+      // contributor seed 57 objects, fall back to ./tmp-images, which
+      // `npm run fetch:images` already populates.
+      //
+      // Guarded by import.meta.env.DEV and dynamically imported, so node:fs
+      // is never bundled into the Worker. scripts/preflight.ts asserts that.
+      if (import.meta.env.DEV) {
+        const local = await readLocalImage(key);
+        if (local) {
+          return new Response(local, {
+            headers: { 'content-type': guessType(key), 'cache-control': 'no-store' },
+          });
+        }
+      }
+      return new Response('not found', { status: 404 });
+    }
+
     return new Response(object.body, {
       headers: {
         'content-type': object.httpMetadata?.contentType ?? 'image/jpeg',
@@ -62,6 +105,26 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
     : accept.includes('image/webp')
       ? 'webp'
       : 'jpeg';
+
+  // In dev there is no Image Transformations service, and a self-referential
+  // fetch back into the dev server does not resolve. Serve the local original
+  // directly — unresized, which is correct enough for layout work.
+  if (import.meta.env.DEV) {
+    const local = await readLocalImage(raw);
+    if (local) {
+      return new Response(local, {
+        headers: {
+          'content-type': guessType(raw),
+          'cache-control': 'no-store',
+          'x-image-transform': 'dev-passthrough',
+        },
+      });
+    }
+    return new Response(
+      'Image not found in ./tmp-images. Run: npm run fetch:images',
+      { status: 404 }
+    );
+  }
 
   const originUrl = new URL(`/img/raw/${raw}`, url.origin).toString();
 

@@ -12,6 +12,12 @@ interface Props extends SeoInput {
 
 const { jsonLd = [], wide = false, ...seoInput } = Astro.props;
 const seo = buildSeo(seoInput);
+
+/* Build with NOINDEX=1 for any deploy that is not production. Belt and braces
+   behind Cloudflare Access: if the gate is ever misconfigured, the pages still
+   cannot be indexed. Asserted by scripts/preflight.ts for production builds. */
+const forceNoindex = process.env.NOINDEX === '1';
+const noindex = seo.noindex || forceNoindex;
 const structured = [organizationLd(), websiteLd(), ...jsonLd];
 ---
 
@@ -24,7 +30,7 @@ const structured = [organizationLd(), websiteLd(), ...jsonLd];
     <title>{seo.title}</title>
     <meta name="description" content={seo.description} />
     <link rel="canonical" href={seo.canonical} />
-    {seo.noindex && <meta name="robots" content="noindex, nofollow" />}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
 
     <meta property="og:type" content={seo.type} />
     <meta property="og:site_name" content="bolder" />

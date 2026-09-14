@@ -62,6 +62,42 @@ export function redirectsIntegration(): AstroIntegration {
           'utf8'
         );
         logger.info('wrote .assetsignore (keeps the Worker bundle out of public assets)');
+
+        // 3. robots.txt and _headers depend on the environment, so they are
+        //    generated rather than hand-maintained. A staging build must be
+        //    impossible to index even if someone forgets Cloudflare Access.
+        const staging = process.env.NOINDEX === '1';
+
+        writeFileSync(
+          join(outDir, 'robots.txt'),
+          staging
+            ? ['# Staging build — not for indexing.', 'User-agent: *', 'Disallow: /', ''].join('\n')
+            : [
+                'User-agent: *',
+                'Allow: /',
+                'Disallow: /api/',
+                'Disallow: /keystatic/',
+                'Disallow: /cart',
+                '',
+                'Sitemap: https://www.boldermade.ca/sitemap-index.xml',
+                '',
+              ].join('\n'),
+          'utf8'
+        );
+
+        const headers = [
+          '/*',
+          '  X-Content-Type-Options: nosniff',
+          '  Referrer-Policy: strict-origin-when-cross-origin',
+          '  X-Frame-Options: DENY',
+          ...(staging ? ['  X-Robots-Tag: noindex, nofollow'] : []),
+          '',
+          '/img/*',
+          '  Cache-Control: public, max-age=31536000, immutable',
+          '',
+        ];
+        writeFileSync(join(outDir, '_headers'), headers.join('\n'), 'utf8');
+        logger.info(staging ? 'wrote robots.txt + _headers (STAGING: noindex)' : 'wrote robots.txt + _headers');
       },
     },
   };

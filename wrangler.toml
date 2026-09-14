@@ -3,6 +3,12 @@ compatibility_date = "2026-09-01"
 compatibility_flags = ["nodejs_compat"]
 main = "dist/_worker.js/index.js"
 
+# No public *.workers.dev URL. A staging build reachable by anyone is a
+# duplicate of the real site waiting to be indexed, and the shop is not
+# meant to be browsable before launch. Publish through a route or custom
+# domain you control, behind Cloudflare Access. See docs/DEPLOY.md.
+workers_dev = false
+
 [assets]
 directory = "dist"
 binding = "ASSETS"

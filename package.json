@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "wrangler dev",
-    "deploy": "npm run preflight && astro build && wrangler deploy",
+    "deploy": "npm run build && npm run preflight && wrangler deploy",
     "check": "astro check",
     "typecheck": "tsc --noEmit",
     "import:products": "node --experimental-strip-types scripts/import-products.ts",
@@ -17,7 +17,11 @@
     "fetch:images": "node --experimental-strip-types scripts/fetch-images.ts",
     "upload:images": "bash scripts/upload-images.sh",
     "build:catalog": "node --experimental-strip-types scripts/build-catalog.ts",
-    "prebuild": "npm run build:catalog"
+    "prebuild": "npm run build:catalog",
+    "build:staging": "NOINDEX=1 npm run build",
+    "deploy:staging": "npm run build:staging && NOINDEX=1 npm run preflight && wrangler deploy",
+    "dev:worker": "npm run build && wrangler dev",
+    "dev:worker:remote": "npm run build && wrangler dev --remote"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.10",

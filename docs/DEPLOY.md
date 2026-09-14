@@ -21,19 +21,68 @@ deploy-blockers — a staging deploy is fine today.
 
 ---
 
-## First deploy (staging)
+## Keeping staging private
+
+A publicly reachable staging copy is a duplicate of the real site waiting to be
+indexed, and the shop is not meant to be browsable before launch. Three layers,
+in order of how much they actually protect you:
+
+### 1. There is no public URL (already done)
+
+`wrangler.toml` sets `workers_dev = false`, so deploying does **not** create a
+`boldermade.<subdomain>.workers.dev` address. Nothing is reachable until you
+attach a route or custom domain yourself. This is the layer that matters — the
+other two are for when you deliberately expose something.
+
+### 2. Cloudflare Access on whatever you do expose
+
+When you need a link to send Samantha, attach a custom domain
+(`staging.boldermade.ca`) and put Zero Trust in front of it:
+
+1. Cloudflare dashboard → **Zero Trust** → **Access** → **Applications** → Add.
+2. Type **Self-hosted**, domain `staging.boldermade.ca`.
+3. Policy: **Allow**, rule `Emails` → your address and Samantha's.
+4. Identity: **One-time PIN** is enough — she gets a code by email, no account.
+
+Free for up to 50 users. Anyone without a matching email gets a login wall, not
+the site. Crawlers see the login wall too.
+
+### 3. Build staging with `NOINDEX=1`
 
 ```bash
-npm run deploy          # runs preflight, builds, then wrangler deploy
+npm run deploy:staging
 ```
 
-This publishes to `boldermade.<your-subdomain>.workers.dev`. Everything except
-checkout, emails and the CMS login works immediately — the storefront, images
-from R2, and all redirects.
+This is belt-and-braces for a misconfigured Access policy. It produces:
 
-**Before sharing that URL with anyone**, note that `robots.txt` allows crawling.
-A `workers.dev` URL that gets indexed becomes a duplicate of the real site. Either
-keep it private or put Cloudflare Access in front of it.
+- `robots.txt` → `Disallow: /`
+- `X-Robots-Tag: noindex, nofollow` on every response
+- `<meta name="robots" content="noindex, nofollow">` on every page
+
+`npm run preflight` **fails** if `dist/` and the target environment disagree in
+either direction — a staging build deployed to production would de-index the real
+site, and a production build deployed to staging would leak it. Both are caught.
+
+> Layer 3 stops indexing. It does **not** stop a person with the URL from
+> browsing the shop. Only Access does that.
+
+### What not to rely on
+
+`robots.txt` alone is a request, not a control. Pages blocked by it can still be
+indexed if something links to them, and it does nothing to stop a human reading
+the page. Never treat it as privacy.
+
+---
+
+## First deploy
+
+```bash
+npm run deploy:staging    # un-indexable staging build
+npm run deploy            # production
+```
+
+Everything except checkout, emails and the CMS login works immediately — the
+storefront, images from R2, and all redirects.
 
 ---
 

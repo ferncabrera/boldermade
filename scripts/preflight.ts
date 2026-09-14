@@ -76,7 +76,25 @@ if (existsSync(manifestPath)) {
   warn.push('data/image-manifest.json missing — run npm run import:products');
 }
 
-// 6. The Worker bundle must not be published as a public static asset.
+// 6a. dist/ must match the environment being deployed. Shipping a staging
+//     build to production silently de-indexes the whole site; shipping a
+//     production build to staging leaks it to Google.
+const robotsPath = join(ROOT, 'dist/robots.txt');
+if (existsSync(robotsPath)) {
+  const builtStaging = /Disallow: \/\s*$/m.test(readFileSync(robotsPath, 'utf8'));
+  const wantStaging = process.env.NOINDEX === '1';
+  if (builtStaging !== wantStaging) {
+    fail.push(
+      builtStaging
+        ? 'dist/ is a STAGING build (robots.txt disallows everything) but NOINDEX is not set.\n' +
+          '    Deploying this to production would de-index the site. Run: npm run build'
+        : 'dist/ is a PRODUCTION build but NOINDEX=1 is set.\n' +
+          '    Deploying this to staging would expose it to Google. Run: npm run build:staging'
+    );
+  }
+}
+
+// 6b. The Worker bundle must not be published as a public static asset.
 const assetsIgnore = join(ROOT, 'dist/.assetsignore');
 if (existsSync(join(ROOT, 'dist')) && !existsSync(assetsIgnore)) {
   fail.push('dist/.assetsignore missing — the Worker bundle would be publicly downloadable. Rebuild.');
