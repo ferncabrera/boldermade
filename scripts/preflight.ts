@@ -56,11 +56,30 @@ for (const f of readdirSync(products).filter((f) => f.endsWith('.mdoc'))) {
 }
 if (placeholders) warn.push(`${placeholders}/${alts} images still have placeholder alt text (npm run audit:alt)`);
 
-// 5. Images must actually exist in R2 before launch.
-const manifest = join(ROOT, 'data/image-manifest.json');
-if (existsSync(manifest)) {
-  const n = JSON.parse(readFileSync(manifest, 'utf8')).length;
-  warn.push(`${n} images must be downloaded from Squarespace and uploaded to R2 before cutover`);
+// 5. Every image referenced by content must exist in the manifest, so nothing
+//    can reference an object that was never uploaded to R2.
+const manifestPath = join(ROOT, 'data/image-manifest.json');
+if (existsSync(manifestPath)) {
+  const keys = new Set(
+    (JSON.parse(readFileSync(manifestPath, 'utf8')) as { key: string }[]).map((e) => e.key)
+  );
+  const missing: string[] = [];
+  for (const f of readdirSync(products).filter((f) => f.endsWith('.mdoc'))) {
+    for (const m of readFileSync(join(products, f), 'utf8').matchAll(/^\s*key:\s*"(.*)"\s*$/gm)) {
+      if (!keys.has(m[1] ?? '')) missing.push(m[1] ?? '');
+    }
+  }
+  if (missing.length) {
+    fail.push(`${missing.length} image key(s) are not in the R2 manifest, e.g. ${missing[0]}`);
+  }
+} else {
+  warn.push('data/image-manifest.json missing — run npm run import:products');
+}
+
+// 6. The Worker bundle must not be published as a public static asset.
+const assetsIgnore = join(ROOT, 'dist/.assetsignore');
+if (existsSync(join(ROOT, 'dist')) && !existsSync(assetsIgnore)) {
+  fail.push('dist/.assetsignore missing — the Worker bundle would be publicly downloadable. Rebuild.');
 }
 
 if (warn.length) {

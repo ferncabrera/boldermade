@@ -4,15 +4,20 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
 /**
- * Generates `_redirects` from each product's `legacySlugs`.
+ * Build-time Cloudflare output shaping.
  *
- * Redirects are DATA, not config: adding an old URL in Keystatic produces a 301
- * on the next build with no code change. Every Squarespace product URL must
- * land somewhere — see MIGRATION_PLAN §8.3.
+ * 1. `_redirects` from each product's `legacySlugs`. Redirects are DATA, not
+ *    config: adding an old URL in Keystatic produces a 301 on the next build
+ *    with no code change. Every Squarespace URL must land somewhere (§8.3).
+ *
+ * 2. `.assetsignore`, so Workers Static Assets does not publish the Worker
+ *    bundle itself. Without it `dist/_worker.js/` is uploaded as static
+ *    assets and the server source becomes publicly downloadable. The Astro
+ *    Cloudflare adapter does not generate this — verified against v12.6.13.
  */
 export function redirectsIntegration(): AstroIntegration {
   return {
-    name: 'bolder:redirects',
+    name: 'bolder:cloudflare-output',
     hooks: {
       'astro:build:done': async ({ dir, logger }) => {
         const { getAllProducts } = await import('../lib/catalog.ts');
@@ -47,9 +52,16 @@ export function redirectsIntegration(): AstroIntegration {
           ''
         );
 
-        const out = join(fileURLToPath(dir), '_redirects');
-        writeFileSync(out, lines.join('\n'), 'utf8');
+        const outDir = fileURLToPath(dir);
+        writeFileSync(join(outDir, '_redirects'), lines.join('\n'), 'utf8');
         logger.info(`wrote ${count + 2} redirects to _redirects`);
+
+        writeFileSync(
+          join(outDir, '.assetsignore'),
+          ['_worker.js', '_routes.json', '.assetsignore', ''].join('\n'),
+          'utf8'
+        );
+        logger.info('wrote .assetsignore (keeps the Worker bundle out of public assets)');
       },
     },
   };

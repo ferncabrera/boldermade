@@ -16,7 +16,7 @@ bucket_name = "boldermade-images"
 # Best-effort only: KV is eventually consistent.
 [[kv_namespaces]]
 binding = "SOLD"
-id = "PLACEHOLDER_CREATE_WITH_WRANGLER_KV_NAMESPACE_CREATE"
+id = "2a050794a499463d95f1d5674f940242"
 
 [vars]
 PUBLIC_SITE_URL = "https://www.boldermade.ca"

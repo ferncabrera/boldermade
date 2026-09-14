@@ -13,13 +13,38 @@
  *
  * Run: npm run import:products
  */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CSV = join(ROOT, 'data/squarespace-products-export-2026-09-13.csv');
 const OUT = join(ROOT, 'content/products');
+const ALT = join(ROOT, 'data/alt-text.json');
+
+/**
+ * Alt text already written into the content files wins over anything generated
+ * here. Re-running the import must never destroy Samantha's editing — losing a
+ * pass over 57 photos to a routine re-run would be an unforced error.
+ */
+function existingAltText(): Map<string, string> {
+  const found = new Map<string, string>();
+  if (!existsSync(OUT)) return found;
+  for (const file of readdirSync(OUT).filter((f) => f.endsWith('.mdoc'))) {
+    const text = readFileSync(join(OUT, file), 'utf8');
+    const keys = [...text.matchAll(/^\s*- key:\s*"(.*)"\s*\n\s*alt:\s*"(.*)"\s*$/gm)];
+    for (const m of keys) {
+      const [, key, alt] = m;
+      if (key && alt && !/—\s*photo\s+\d+\s+of\s+\d+\s*$/i.test(alt)) found.set(key, alt);
+    }
+  }
+  return found;
+}
+
+function altBases(): Record<string, string> {
+  if (!existsSync(ALT)) return {};
+  return JSON.parse(readFileSync(ALT, 'utf8')) as Record<string, string>;
+}
 
 /** Squarespace's own image CDN serves originals when asked for a big width. */
 const FULL_RES = '?format=2500w';
@@ -117,6 +142,8 @@ interface Product {
 }
 
 function main() {
+  const preserved = existingAltText();
+  const bases = altBases();
   const rows = parseCsv(readFileSync(CSV, 'utf8'));
   const products: Product[] = [];
   const errors: string[] = [];
@@ -164,14 +191,17 @@ function main() {
         status: (r['Visible'] ?? '').toLowerCase() === 'yes' ? 'published' : 'draft',
         sizing: 'fixed', fixedSize: '', sizeRange: '',
         variants: [], materials: [], stone: '',
-        images: imgs.map((src, i) => ({
-          key: `products/${slug}/${String(i + 1).padStart(2, '0')}.jpg`,
-          // Provisional alt text. Non-empty so the site is usable and passes a
-          // basic a11y bar, but generic — `npm run audit:alt` lists every one
-          // still awaiting a real human description.
-          alt: `${cleanTitleForAlt(title)} — photo ${i + 1} of ${imgs.length}`,
-          src: src + FULL_RES,
-        })),
+        images: imgs.map((src, i) => {
+          const key = `products/${slug}/${String(i + 1).padStart(2, '0')}.jpg`;
+          const base = bases[slug];
+          const generated = base
+            ? i === 0
+              ? base
+              : `${base}, alternate view`
+            : // No base written yet: fall back to a placeholder that audit:alt flags.
+              `${cleanTitleForAlt(title)} — photo ${i + 1} of ${imgs.length}`;
+          return { key, alt: preserved.get(key) ?? generated, src: src + FULL_RES };
+        }),
         description: htmlToMarkdown(r['Description'] ?? ''),
         legacySlugs: legacy ? [legacy] : [],
         leadTime: /made to order/i.test(title) ? '3–4 weeks' : '',
@@ -272,10 +302,10 @@ function main() {
   console.log(`  ${pub} published, ${products.length - pub} draft`);
   if (warnings.length) console.log('\nWarnings:\n' + warnings.map((w) => `  ! ${w}`).join('\n'));
   console.log(
-    `\nNEXT: all ${manifest.length} images carry PROVISIONAL alt text ` +
-    `("<ring> — photo N of M"). That is a placeholder, not a description. ` +
-    `Run \`npm run audit:alt\` for the worklist — real alt text is how Google ` +
-    `Images finds her work, and it is the single cheapest SEO win available.\n`
+    `\nAlt text: written from data/alt-text.json, which is derived from Samantha's\n` +
+    `own product copy. Accurate about each PIECE, but nobody has seen the actual\n` +
+    `frames — improving them in Keystatic is still worthwhile. Anything edited\n` +
+    `there is preserved across re-runs. Check with \`npm run audit:alt\`.\n`
   );
 }
 
